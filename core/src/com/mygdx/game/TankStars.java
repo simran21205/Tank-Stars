@@ -32,7 +32,9 @@ public class TankStars extends Game {
     public ChooseTank chooseTankScreen;
     public ChooseTank2 chooseTankScreen2;
     public MainToChoose mainToChoose;
-//    public PlayScreen playScreen;
+    public PlayScreen playScreen;
+    public SettingsScreen settingsScreen;
+    public WeaponsScreen weaponsScreen;
 
     @Override
     public void create() {
@@ -52,7 +54,9 @@ public class TankStars extends Game {
         chooseTankScreen = new ChooseTank(this);
         chooseTankScreen2 = new ChooseTank2(this);
         mainToChoose = new MainToChoose(this);
-//        playScreen = new PlayScreen(this);
+        playScreen = new PlayScreen(this);
+        settingsScreen = new SettingsScreen(this);
+        weaponsScreen = new WeaponsScreen(this);
 //
         this.setScreen(loadingScreen);
     }
