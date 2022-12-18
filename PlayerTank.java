@@ -1,5 +1,4 @@
 package com.mygdx.game.Screens;
-
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class PlayerTank extends Tank{
@@ -15,9 +14,9 @@ public class PlayerTank extends Tank{
     @Override
     public Weapons[] fireweapons() {
         Weapons[] weapons = new Weapons[1];
-        weapons[0]=new Weapons(xPosition*width*0.82f,yPosition*height*0.45f,
+        weapons[0]=new Weapons(weaponMovementspeed,xPosition*width*0.85f,yPosition*height*0.41f,
                 weapon_width,weapon_heigth,
-                weaponMovementspeed,weaponsTextureRegion);
+                weaponsTextureRegion);
         timesinceLastshot=0;
         return weapons;
     }
