@@ -1,4 +1,5 @@
 package com.mygdx.game.Screens;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class EnemyTank extends Tank{
@@ -14,11 +15,14 @@ public class EnemyTank extends Tank{
     @Override
     public Weapons[] fireweapons() {
         Weapons[] weapons = new Weapons[1];
-        weapons[0]=new Weapons(weaponMovementspeed,xPosition*width*0.6f,yPosition*height*0.6f,
+        weapons[0]=new Weapons(weaponMovementspeed,boundingBox.x*boundingBox.width*0.6f,boundingBox.y*boundingBox.height*0.6f,
                 weapon_width,weapon_heigth,
                 weaponsTextureRegion);
         timesinceLastshot=0;
         return weapons;
+    }
+    public void draw(Batch batch) {
+        batch.draw(shipTextureRegion, boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
     }
 
 }
