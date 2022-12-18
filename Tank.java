@@ -3,7 +3,7 @@ package com.mygdx.game.Screens;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-public class Tank {
+public abstract class Tank {
 
     //ship characteristics
     float movementSpeed;  //world units per second
@@ -12,24 +12,49 @@ public class Tank {
     float xPosition, yPosition; //lower-left corner
     float width, height;
 
-    //graphics
-    TextureRegion shipTexture, shieldTexture;
+    //weapon info
+    float weapon_width,weapon_heigth;
+    float weaponMovementspeed;
+    float timeBetweenshots;
+    float timesinceLastshot=0;
 
-    public Tank(float movementSpeed, int shield,
+
+    //graphics
+    TextureRegion shipTextureRegion, shieldTextureRegion,weaponsTextureRegion;
+
+    public Tank(float xCentre, float yCentre,
                 float width, float height,
-                float xCentre, float yCentre,
-                TextureRegion shipTexture, TextureRegion shieldTexture) {
+                float movementSpeed,int sheild,
+                float weapon_width,float weapon_heigth,float weaponMovementspeed,float timeBetweenshots,
+                TextureRegion shipTexture, TextureRegion shieldTexture,
+                TextureRegion weaponsTexture) {
         this.movementSpeed = movementSpeed;
         this.xPosition = xCentre - width / 2;
         this.yPosition = yCentre - height / 2;
         this.width = width;
         this.height = height;
-        this.shipTexture = shipTexture;
-        this.shieldTexture = shieldTexture;
+        this.weapon_width=weapon_width;
+        this.weapon_heigth=weapon_heigth;
+        this.weaponMovementspeed=weaponMovementspeed;
+        this.timeBetweenshots=timeBetweenshots;
+        this.shipTextureRegion = shipTexture;
+        this.shieldTextureRegion = shieldTexture;
+        this.weaponsTextureRegion = weaponsTexture;
     }
+
+    public void update(float deltaTime){
+        timesinceLastshot += deltaTime;
+    }
+
+    public boolean canFire(){
+        boolean result = timesinceLastshot - timeBetweenshots>=0;
+        return result;
+    }
+
+    public abstract Weapons[] fireweapons();
+
 
     public void draw(Batch batch) {
-        batch.draw(shipTexture, xPosition, yPosition, width, height);
+        batch.draw(shipTextureRegion, xPosition, yPosition, width, height);
     }
 }
-
