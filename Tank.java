@@ -31,6 +31,8 @@ public abstract class Tank {
         this.movementSpeed = movementSpeed;
         this.xPosition = xCentre - width / 2;
         this.yPosition = yCentre - height / 2;
+//        this.xPosition = xCentre ;
+//        this.yPosition = yCentre ;
         this.width = width;
         this.height = height;
         this.weapon_width=weapon_width;
