@@ -2,6 +2,7 @@ package com.mygdx.game.Screens;
 
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 
 public class Weapons {
     float movementSpeed;
@@ -22,6 +23,10 @@ public class Weapons {
     }
     public void draw(Batch batch){
         batch.draw(textureRegion,xPosition-width/2,yPosition,width,heigth);
+    }
+
+    public Rectangle getBoundbox(){
+        return new com.badlogic.gdx.math.Rectangle(xPosition,yPosition,width,heigth);
     }
 
 }
