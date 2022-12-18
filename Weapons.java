@@ -7,26 +7,23 @@ import com.badlogic.gdx.math.Rectangle;
 public class Weapons {
     float movementSpeed;
     //POSITION DIMENSIONS
-    float xPosition, yPosition;
-    float width,heigth;
+//    float xPosition, yPosition;
+//    float width,heigth;
+    Rectangle boundingBox;
 
     //graphics
     TextureRegion textureRegion;
 
-    public Weapons(float movementSpeed, float xPosition, float yPosition, float width, float heigth, TextureRegion textureRegion) {
+    public Weapons(float movementSpeed, float xCenter, float yBottom, float width, float height, TextureRegion textureRegion) {
         this.movementSpeed = movementSpeed;
-        this.xPosition = xPosition;
-        this.yPosition = yPosition;
-        this.width = width;
-        this.heigth = heigth;
+        this.boundingBox= new Rectangle(xCenter - width / 2,yBottom,width,height);
         this.textureRegion = textureRegion;
     }
     public void draw(Batch batch){
-        batch.draw(textureRegion,xPosition-width/2,yPosition,width,heigth);
+        batch.draw(textureRegion,boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
     }
-
-    public Rectangle getBoundbox(){
-        return new com.badlogic.gdx.math.Rectangle(xPosition,yPosition,width,heigth);
-    }
+//    public Rectangle getBoundingbox(){
+//        return new com.badlogic.gdx.math.Rectangle(xPosition,yPosition,width,heigth);
+//    }
 
 }
