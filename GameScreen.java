@@ -22,6 +22,7 @@ public class GameScreen implements Screen {
     //graphics
     private SpriteBatch batch;
     private TextureAtlas textureAtlas;
+    private Texture background;
 
     private TextureRegion[] backgrounds;
     private float backgroundHeight; //height of background in World units
@@ -32,6 +33,7 @@ public class GameScreen implements Screen {
 
 
     //timing
+    private int backgroundOffset;
     private float[] backgroundOffsets = {0, 0, 0, 0};
     private float backgroundMaxScrollingSpeed;
 
@@ -50,12 +52,16 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         viewport = new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
 
+        background = new Texture("background1.png");
+        backgroundOffset = 0;
+
+
         //set up the texture atlas
         textureAtlas = new TextureAtlas("images.atlas");
 
         //setting up the background
-        backgrounds = new TextureRegion[4];
-        backgrounds[0] = new Texture("background1.png");
+//        backgrounds = new TextureRegion[4];
+//        backgrounds[0] = new Texture("background1.png");
 //        backgrounds[1] = textureAtlas.findRegion("Starscape01");
 //        backgrounds[2] = textureAtlas.findRegion("Starscape02");
 //        backgrounds[3] = textureAtlas.findRegion("Starscape03");
@@ -94,7 +100,12 @@ public class GameScreen implements Screen {
         batch.begin();
 
         //scrolling background
-        renderBackground(deltaTime);
+//        renderBackground(deltaTime);
+//        backgroundOffset++;
+//        if (backgroundOffset % WORLD_HEIGHT == 0){
+//            backgroundOffset = 0;
+//        }
+        batch.draw(background,0,0,WORLD_WIDTH,WORLD_HEIGHT);
 
         //enemy ships
         enemyShip.draw(batch);
