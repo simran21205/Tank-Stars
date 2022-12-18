@@ -2,6 +2,7 @@ package com.mygdx.game.Screens;
 
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 
 public abstract class Tank {
 
@@ -11,6 +12,9 @@ public abstract class Tank {
     //position & dimension
     float xPosition, yPosition; //lower-left corner
     float width, height;
+    Rectangle boundedbox;
+
+
 
     //weapon info
     float weapon_width,weapon_heigth;
@@ -29,12 +33,12 @@ public abstract class Tank {
                 TextureRegion shipTexture, TextureRegion shieldTexture,
                 TextureRegion weaponsTexture) {
         this.movementSpeed = movementSpeed;
+
         this.xPosition = xCentre - width / 2;
         this.yPosition = yCentre - height / 2;
-//        this.xPosition = xCentre ;
-//        this.yPosition = yCentre ;
         this.width = width;
         this.height = height;
+        this.boundedbox= new Rectangle(xPosition,yPosition,width,height);
         this.weapon_width=weapon_width;
         this.weapon_heigth=weapon_heigth;
         this.weaponMovementspeed=weaponMovementspeed;
@@ -45,6 +49,7 @@ public abstract class Tank {
     }
 
     public void update(float deltaTime){
+        boundedbox.set(xPosition,yPosition,width,height);
         timesinceLastshot += deltaTime;
     }
 
@@ -54,6 +59,13 @@ public abstract class Tank {
     }
 
     public abstract Weapons[] fireweapons();
+
+    public boolean intersects(Rectangle otherRectangle){
+        Rectangle thisRectangle = new Rectangle(xPosition,yPosition,width,height);
+        return thisRectangle.overlaps(otherRectangle);
+
+    }
+    public void hit(Weapons weapons){}
 
 
     public void draw(Batch batch) {
