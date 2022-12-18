@@ -1,6 +1,8 @@
 package com.mygdx.game.Screens;
 
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -30,12 +32,11 @@ public class GameScreen implements Screen {
     private TextureRegion[] backgrounds;
     private float backgroundHeight; //height of background in World units
 
-    private TextureRegion tank1TextureRegion, tank2TextureRegion,
-            tank3TextureRegion, tank4TextureRegion,
-            tank5TextureRegion, tank6TextureRegion, tank7TextureRegion,playerWeaponTextureRegion,enemyWeaponTextureRegion;
+    private TextureRegion tank1TextureRegion, tank6TextureRegion, tank7TextureRegion,playerWeaponTextureRegion,enemyWeaponTextureRegion;
 
-    //timing
+
     private int backgroundOffset;
+    //timing
     private float[] backgroundOffsets = {0, 0, 0, 0};
     private float backgroundMaxScrollingSpeed;
 
@@ -52,13 +53,13 @@ public class GameScreen implements Screen {
 
 
 
-
     public GameScreen(final TankStars app) {
         this.app = app;
 
         camera = new OrthographicCamera();
         viewport = new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         background = new Texture("background2.png");
+
         //set up the texture atlas
         textureAtlas = new TextureAtlas("images.atlas");
 
@@ -74,17 +75,17 @@ public class GameScreen implements Screen {
 
         //initialize texture regions
         tank1TextureRegion = textureAtlas.findRegion("tank1");
-        tank2TextureRegion = textureAtlas.findRegion("tank2");
-        tank3TextureRegion = textureAtlas.findRegion("tank3");
-        tank4TextureRegion = textureAtlas.findRegion("tank4");
-        tank5TextureRegion = textureAtlas.findRegion("tank5");
+//        tank2TextureRegion = textureAtlas.findRegion("tank2");
+//        tank3TextureRegion = textureAtlas.findRegion("tank3");
+//        tank4TextureRegion = textureAtlas.findRegion("tank4");
+//        tank5TextureRegion = textureAtlas.findRegion("tank5");
         tank6TextureRegion = textureAtlas.findRegion("tank6");
         tank7TextureRegion = textureAtlas.findRegion("tank7");
         playerWeaponTextureRegion = textureAtlas.findRegion("weapon1");
         enemyWeaponTextureRegion = textureAtlas.findRegion("weapon2");
         tank7TextureRegion.flip(true, false);
         enemyWeaponTextureRegion.flip(true, false);
-//        enemyShieldTextureRegion.flip(false, true);
+
 
 //        playerLaserTextureRegion= textureAtlas.findRegion("laserBlue03");
 //        enemyLaserTextureRegion= textureAtlas.findRegion("laserRed03");
@@ -93,15 +94,14 @@ public class GameScreen implements Screen {
         //set up game objects
         playerShip = new PlayerTank(WORLD_HEIGHT*1/15,WORLD_WIDTH/2,
                 2, 3,
-                10, 10,
+                30, 10,
                 1,0.5f,45,1f,
-                tank1TextureRegion, tank2TextureRegion,playerWeaponTextureRegion);
+                tank1TextureRegion, tank1TextureRegion,playerWeaponTextureRegion);
         enemyShip = new EnemyTank(WORLD_HEIGHT*2/4,WORLD_WIDTH/2,
                 2, 3,
-                10, 10,
+                30, 10,
                 1f,0.5f,45,1f,
                 tank7TextureRegion, tank7TextureRegion,enemyWeaponTextureRegion);
-
         playerweapons = new LinkedList<>();
         enemyweapons=new LinkedList<>();
 
@@ -109,38 +109,35 @@ public class GameScreen implements Screen {
         batch = new SpriteBatch();
     }
 
-    @Override
-    public void render(float deltaTime) {
-        batch.begin();
-        batch.draw(background,0,0,WORLD_WIDTH,WORLD_HEIGHT);
+    private void detectInput(float deltaTime){
+        float leftlimit, rightlimit, uplimit, downlimit;
+        leftlimit = -playerShip.boundingBox.x;
+        downlimit =-playerShip.boundingBox.y;
+        rightlimit = WORLD_WIDTH - playerShip.boundingBox.x - playerShip.boundingBox.width;
+        uplimit = WORLD_HEIGHT/2 - playerShip.boundingBox.y - playerShip.boundingBox.height;
 
-        playerShip.update(deltaTime);
-        enemyShip.update(deltaTime);
-        //scrolling background
-//        renderBackground(deltaTime);
-        //enemy ships
-        enemyShip.draw(batch);
-        //player ship
-        playerShip.draw(batch);
-        //lasers
-        renderLasers(deltaTime);
-        //detectcollisions
-        detectCollisions();
-        //explosions
-        renderExplosions(deltaTime);
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && rightlimit>0){
+            playerShip.translate(Math.min(playerShip.movementSpeed*deltaTime,rightlimit), 0f);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.UP) && uplimit>0){
+            playerShip.translate(0f, Math.min(playerShip.movementSpeed*deltaTime,uplimit));
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && leftlimit<0){
+            playerShip.translate(Math.min(-playerShip.movementSpeed*deltaTime,leftlimit), 0f);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && rightlimit>0){
+            playerShip.translate( 0f, Math.min(-playerShip.movementSpeed*deltaTime,downlimit));
+        }
 
-
-
-        batch.end();
     }
 
-
     private void renderExplosions(float deltaTime){}
+
     private void detectCollisions(){
         ListIterator<Weapons> iterator = playerweapons.listIterator();
         while (iterator.hasNext()){
             Weapons weapons = iterator.next();
-            if (enemyShip.intersects(weapons.getBoundbox())){
+            if (enemyShip.intersects(weapons.boundingBox)){
                 //contact with enemy
                 enemyShip.hit(weapons);
                 iterator.remove();
@@ -149,11 +146,10 @@ public class GameScreen implements Screen {
         iterator = enemyweapons.listIterator();
         while (iterator.hasNext()){
             Weapons weapons = iterator.next();
-            if (playerShip.intersects((weapons.getBoundbox()))){
+            if (playerShip.intersects((weapons.boundingBox))){
                 iterator.remove();
             }
         }
-
     }
 
     private void renderLasers(float deltaTime){
@@ -174,8 +170,8 @@ public class GameScreen implements Screen {
         while (iterator.hasNext()){
             Weapons weapons = iterator.next();
             weapons.draw(batch);
-            weapons.xPosition += weapons.movementSpeed*deltaTime;
-            if (weapons.xPosition>WORLD_WIDTH){
+            weapons.boundingBox.x += weapons.movementSpeed*deltaTime;
+            if (weapons.boundingBox.x>WORLD_WIDTH){
                 iterator.remove();
             }
 
@@ -184,14 +180,38 @@ public class GameScreen implements Screen {
         while (iterator.hasNext()){
             Weapons weapons = iterator.next();
             weapons.draw(batch);
-            weapons.xPosition -= weapons.movementSpeed*deltaTime;
-            if (weapons.yPosition>WORLD_HEIGHT){
+            weapons.boundingBox.x -= weapons.movementSpeed*deltaTime;
+            if (weapons.boundingBox.x>WORLD_WIDTH){
                 iterator.remove();
             }
         }
+    }
 
+    @Override
+    public void render(float deltaTime) {
+        batch.begin();
 
+        detectInput(deltaTime);
 
+        playerShip.update(deltaTime);
+        enemyShip.update(deltaTime);
+
+        batch.draw(background,0,0,WORLD_WIDTH,WORLD_HEIGHT);
+
+        //scrolling background
+//        renderBackground(deltaTime);
+
+        //enemy ships
+        enemyShip.draw(batch);
+
+        //player ship
+        playerShip.draw(batch);
+        renderLasers(deltaTime);
+        detectCollisions();
+        renderExplosions(deltaTime);
+        //explosions
+
+        batch.end();
     }
 
     private void renderBackground(float deltaTime) {
