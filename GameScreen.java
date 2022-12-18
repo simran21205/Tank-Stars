@@ -25,15 +25,17 @@ public class GameScreen implements Screen {
     //graphics
     private SpriteBatch batch;
     private TextureAtlas textureAtlas;
+    private Texture background;
 
     private TextureRegion[] backgrounds;
     private float backgroundHeight; //height of background in World units
 
     private TextureRegion tank1TextureRegion, tank2TextureRegion,
             tank3TextureRegion, tank4TextureRegion,
-            tank5TextureRegion, tank6TextureRegion, tank7TextureRegion,playerWeaponTextureRegion,EnemyWeaponTextureRegion;
+            tank5TextureRegion, tank6TextureRegion, tank7TextureRegion,playerWeaponTextureRegion,enemyWeaponTextureRegion;
 
 
+    private int backgroundOffset;
     //timing
     private float[] backgroundOffsets = {0, 0, 0, 0};
     private float backgroundMaxScrollingSpeed;
@@ -56,12 +58,13 @@ public class GameScreen implements Screen {
 
         camera = new OrthographicCamera();
         viewport = new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
+        background = new Texture("background2.png");
 
         //set up the texture atlas
         textureAtlas = new TextureAtlas("images.atlas");
 
         //setting up the background
-        backgrounds = new TextureRegion[4];
+//        backgrounds = new TextureRegion[4];
 //        backgrounds[0] = new Texture("background1.png");
 //        backgrounds[1] = textureAtlas.findRegion("Starscape01");
 //        backgrounds[2] = textureAtlas.findRegion("Starscape02");
@@ -78,23 +81,27 @@ public class GameScreen implements Screen {
         tank5TextureRegion = textureAtlas.findRegion("tank5");
         tank6TextureRegion = textureAtlas.findRegion("tank6");
         tank7TextureRegion = textureAtlas.findRegion("tank7");
-//        enemyShieldTextureRegion.flip(false, true);
+        playerWeaponTextureRegion = textureAtlas.findRegion("weapon1");
+        enemyWeaponTextureRegion = textureAtlas.findRegion("weapon2");
+        tank7TextureRegion.flip(true, false);
+        enemyWeaponTextureRegion.flip(true, false);
+
 
 //        playerLaserTextureRegion= textureAtlas.findRegion("laserBlue03");
 //        enemyLaserTextureRegion= textureAtlas.findRegion("laserRed03");
 
 
         //set up game objects
-        playerShip = new PlayerTank(WORLD_HEIGHT/4,WORLD_WIDTH/2,
+        playerShip = new PlayerTank(WORLD_HEIGHT*1/15,WORLD_WIDTH/2,
                 2, 3,
                 10, 10,
-                0.4f,4f,45,0.5f,
+                1,0.5f,45,1f,
                 tank1TextureRegion, tank2TextureRegion,playerWeaponTextureRegion);
-        enemyShip = new EnemyTank(2, 1, 10, 10,
-                WORLD_HEIGHT*2/4, WORLD_WIDTH/2 ,
-                0.4f,4f,45,0.5f,
-                tank7TextureRegion, tank4TextureRegion,EnemyWeaponTextureRegion);
-
+        enemyShip = new EnemyTank(WORLD_HEIGHT*2/4,WORLD_WIDTH/2,
+                2, 3,
+                10, 10,
+                1f,0.5f,45,1f,
+                tank7TextureRegion, tank7TextureRegion,enemyWeaponTextureRegion);
         playerweapons = new LinkedList<>();
         enemyweapons=new LinkedList<>();
 
@@ -105,12 +112,13 @@ public class GameScreen implements Screen {
     @Override
     public void render(float deltaTime) {
         batch.begin();
+        batch.draw(background,0,0,WORLD_WIDTH,WORLD_HEIGHT);
 
         playerShip.update(deltaTime);
         enemyShip.update(deltaTime);
 
         //scrolling background
-        renderBackground(deltaTime);
+//        renderBackground(deltaTime);
 
         //enemy ships
         enemyShip.draw(batch);
@@ -143,16 +151,15 @@ public class GameScreen implements Screen {
             }
 
         }
-//        iterator = enemyweapons.listIterator();
-//        while (iterator.hasNext()){
-//            Weapons weapons = iterator.next();
-//            weapons.draw(batch);
-//            weapons.yPosition += weapons.movementSpeed*deltaTime;
-//            if (weapons.yPosition>WORLD_HEIGHT){
-//                iterator.remove();
-//            }
-//
-//        }
+        iterator = enemyweapons.listIterator();
+        while (iterator.hasNext()){
+            Weapons weapons = iterator.next();
+            weapons.draw(batch);
+            weapons.xPosition -= weapons.movementSpeed*deltaTime;
+            if (weapons.yPosition>WORLD_HEIGHT){
+                iterator.remove();
+            }
+        }
 
 
 
