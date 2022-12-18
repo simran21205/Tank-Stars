@@ -34,9 +34,8 @@ public class GameScreen implements Screen {
             tank3TextureRegion, tank4TextureRegion,
             tank5TextureRegion, tank6TextureRegion, tank7TextureRegion,playerWeaponTextureRegion,enemyWeaponTextureRegion;
 
-
-    private int backgroundOffset;
     //timing
+    private int backgroundOffset;
     private float[] backgroundOffsets = {0, 0, 0, 0};
     private float backgroundMaxScrollingSpeed;
 
@@ -53,13 +52,13 @@ public class GameScreen implements Screen {
 
 
 
+
     public GameScreen(final TankStars app) {
         this.app = app;
 
         camera = new OrthographicCamera();
         viewport = new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         background = new Texture("background2.png");
-
         //set up the texture atlas
         textureAtlas = new TextureAtlas("images.atlas");
 
@@ -85,7 +84,7 @@ public class GameScreen implements Screen {
         enemyWeaponTextureRegion = textureAtlas.findRegion("weapon2");
         tank7TextureRegion.flip(true, false);
         enemyWeaponTextureRegion.flip(true, false);
-
+//        enemyShieldTextureRegion.flip(false, true);
 
 //        playerLaserTextureRegion= textureAtlas.findRegion("laserBlue03");
 //        enemyLaserTextureRegion= textureAtlas.findRegion("laserRed03");
@@ -102,6 +101,7 @@ public class GameScreen implements Screen {
                 10, 10,
                 1f,0.5f,45,1f,
                 tank7TextureRegion, tank7TextureRegion,enemyWeaponTextureRegion);
+
         playerweapons = new LinkedList<>();
         enemyweapons=new LinkedList<>();
 
@@ -116,24 +116,53 @@ public class GameScreen implements Screen {
 
         playerShip.update(deltaTime);
         enemyShip.update(deltaTime);
-
         //scrolling background
 //        renderBackground(deltaTime);
-
         //enemy ships
         enemyShip.draw(batch);
-
         //player ship
         playerShip.draw(batch);
-
         //lasers
+        renderLasers(deltaTime);
+        //detectcollisions
+        detectCollisions();
+        //explosions
+        renderExplosions(deltaTime);
+
+
+
+        batch.end();
+    }
+
+
+    private void renderExplosions(float deltaTime){}
+    private void detectCollisions(){
+        ListIterator<Weapons> iterator = playerweapons.listIterator();
+        while (iterator.hasNext()){
+            Weapons weapons = iterator.next();
+            if (enemyShip.intersects(weapons.getBoundbox())){
+                //contact with enemy
+                enemyShip.hit(weapons);
+                iterator.remove();
+            }
+        }
+        iterator = enemyweapons.listIterator();
+        while (iterator.hasNext()){
+            Weapons weapons = iterator.next();
+            if (playerShip.intersects((weapons.getBoundbox()))){
+                iterator.remove();
+            }
+        }
+
+    }
+
+    private void renderLasers(float deltaTime){
         if(playerShip.canFire()){
             Weapons[] weapons = playerShip.fireweapons();
             for (Weapons weapons1:weapons){
                 playerweapons.add(weapons1);
             }
         }
-
         if(enemyShip.canFire()){
             Weapons[] weapons = enemyShip.fireweapons();
             for (Weapons weapons1:weapons){
@@ -163,10 +192,6 @@ public class GameScreen implements Screen {
 
 
 
-
-        //explosions
-
-        batch.end();
     }
 
     private void renderBackground(float deltaTime) {
