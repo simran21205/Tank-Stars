@@ -10,9 +10,9 @@ public abstract class Tank {
     float movementSpeed;  //world units per second
 
     //position & dimension
-    float xPosition, yPosition; //lower-left corner
-    float width, height;
-    Rectangle boundedbox;
+//    float xPosition, yPosition; //lower-left corner
+//    float width, height;
+    Rectangle boundingBox;
 
 
 
@@ -33,12 +33,7 @@ public abstract class Tank {
                 TextureRegion shipTexture, TextureRegion shieldTexture,
                 TextureRegion weaponsTexture) {
         this.movementSpeed = movementSpeed;
-
-        this.xPosition = xCentre - width / 2;
-        this.yPosition = yCentre - height / 2;
-        this.width = width;
-        this.height = height;
-        this.boundedbox= new Rectangle(xPosition,yPosition,width,height);
+        this.boundingBox= new Rectangle(xCentre - width / 2,yCentre - height / 2,width,height);
         this.weapon_width=weapon_width;
         this.weapon_heigth=weapon_heigth;
         this.weaponMovementspeed=weaponMovementspeed;
@@ -49,7 +44,7 @@ public abstract class Tank {
     }
 
     public void update(float deltaTime){
-        boundedbox.set(xPosition,yPosition,width,height);
+//        boundingBox.set(xPosition,yPosition,width,height);
         timesinceLastshot += deltaTime;
     }
 
@@ -61,14 +56,16 @@ public abstract class Tank {
     public abstract Weapons[] fireweapons();
 
     public boolean intersects(Rectangle otherRectangle){
-        Rectangle thisRectangle = new Rectangle(xPosition,yPosition,width,height);
-        return thisRectangle.overlaps(otherRectangle);
+        return boundingBox.overlaps(otherRectangle);
 
+    }
+    public void translate(float xChange, float yChange){
+        boundingBox.setPosition(boundingBox.x+xChange, boundingBox.y+yChange);
     }
     public void hit(Weapons weapons){}
 
 
     public void draw(Batch batch) {
-        batch.draw(shipTextureRegion, xPosition, yPosition, width, height);
+        batch.draw(shipTextureRegion, boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
     }
 }
