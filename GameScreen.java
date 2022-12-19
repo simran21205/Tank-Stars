@@ -3,6 +3,7 @@ package com.mygdx.game.Screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -10,14 +11,16 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.mygdx.game.TankStars;
 
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Vector;
 
-public class GameScreen implements Screen {
+public class GameScreen implements Screen, InputProcessor {
     private final TankStars app;
 
     //screen
@@ -49,9 +52,12 @@ public class GameScreen implements Screen {
     private Tank enemyShip;
     private LinkedList<Weapons> playerweapons ;
     private LinkedList<Weapons> enemyweapons;
-
-
-
+    private final float TOUCH_MOVEMENT_THRESHOLD = 0.5f;
+    Vector2 gravity;
+    private float throwAngle=50;
+    private float deltTime=2;
+    private Vector2 initialVelocity;
+    boolean isFired;
 
     public GameScreen(final TankStars app) {
         this.app = app;
@@ -59,6 +65,11 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         viewport = new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         background = new Texture("background2.png");
+
+        Gdx.input.setInputProcessor(this);
+        gravity=new Vector2(0, -Gdx.graphics.getHeight()*.05f);
+        float throwVelocity=Gdx.graphics.getWidth()*.3f;
+        initialVelocity=new Vector2((float)(throwVelocity*Math.sin(throwAngle * Math.PI / 180)),(float)(throwVelocity*Math.cos(throwAngle * Math.PI / 180)));
 
         //set up the texture atlas
         textureAtlas = new TextureAtlas("images.atlas");
@@ -114,7 +125,7 @@ public class GameScreen implements Screen {
         leftlimit = -playerShip.boundingBox.x;
         downlimit =-playerShip.boundingBox.y;
         rightlimit = WORLD_WIDTH - playerShip.boundingBox.x - playerShip.boundingBox.width;
-        uplimit = WORLD_HEIGHT/2 - playerShip.boundingBox.y - playerShip.boundingBox.height;
+        uplimit = WORLD_HEIGHT - playerShip.boundingBox.y - playerShip.boundingBox.height;
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && rightlimit>0){
             playerShip.translate(Math.min(playerShip.movementSpeed*deltaTime,rightlimit), 0f);
@@ -125,8 +136,38 @@ public class GameScreen implements Screen {
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && leftlimit<0){
             playerShip.translate(Math.min(-playerShip.movementSpeed*deltaTime,leftlimit), 0f);
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && rightlimit>0){
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && downlimit<0){
             playerShip.translate( 0f, Math.min(-playerShip.movementSpeed*deltaTime,downlimit));
+        }
+
+        if (Gdx.input.isTouched()){
+            float xTouchPixels = Gdx.input.getX();
+            float yTouchPixels = Gdx.input.getY();
+            Vector2 touchPoint = new Vector2(xTouchPixels, yTouchPixels);
+            touchPoint = viewport.unproject(touchPoint);
+
+            Vector2 playerShipCenter = new Vector2(playerShip.boundingBox.x + playerShip.boundingBox.width/2,
+                    playerShip.boundingBox.y + playerShip.boundingBox.height/2);
+
+            float touchDistance = touchPoint.dst(playerShipCenter);
+
+            if (touchDistance > TOUCH_MOVEMENT_THRESHOLD){
+                float xTouchDifference = touchPoint.x - playerShipCenter.x;
+                float yTouchDifference = touchPoint.y - playerShipCenter.y;
+
+                float xMove = xTouchDifference / touchDistance + playerShip.movementSpeed*deltaTime;
+                float yMove = yTouchDifference / touchDistance + playerShip.movementSpeed*deltaTime;
+
+                if (xMove>0) xMove = Math.min(xMove, rightlimit);
+                else xMove = Math.max(xMove, leftlimit);
+
+                if (yMove>0) yMove = Math.min(yMove, uplimit);
+                else yMove = Math.max(yMove, downlimit);
+
+                playerShip.translate(xMove,yMove);
+            }
+
+
         }
 
     }
@@ -170,7 +211,14 @@ public class GameScreen implements Screen {
         while (iterator.hasNext()){
             Weapons weapons = iterator.next();
             weapons.draw(batch);
-            weapons.boundingBox.x += weapons.movementSpeed*deltaTime;
+//            weapons.boundingBox.x += weapons.movementSpeed*deltaTime;
+
+            float delta=Gdx.graphics.getDeltaTime();
+            initialVelocity.x=initialVelocity.x+gravity.x*delta*deltaTime;
+            initialVelocity.y=initialVelocity.y+gravity.y*delta*deltaTime;
+
+            weapons.boundingBox.setPosition(weapons.boundingBox.getX()+initialVelocity.x * delta * deltaTime,weapons.boundingBox.getY()+initialVelocity.y * delta * deltaTime);
+
             if (weapons.boundingBox.x>WORLD_WIDTH){
                 iterator.remove();
             }
@@ -180,7 +228,8 @@ public class GameScreen implements Screen {
         while (iterator.hasNext()){
             Weapons weapons = iterator.next();
             weapons.draw(batch);
-            weapons.boundingBox.x -= weapons.movementSpeed*deltaTime;
+//            weapons.boundingBox.x -= weapons.movementSpeed*deltaTime;
+
             if (weapons.boundingBox.x>WORLD_WIDTH){
                 iterator.remove();
             }
@@ -261,5 +310,46 @@ public class GameScreen implements Screen {
     @Override
     public void dispose() {
         batch.dispose();
+    }
+
+    @Override
+    public boolean keyDown(int keycode) {
+        return false;
+    }
+
+    @Override
+    public boolean keyUp(int keycode) {
+        return false;
+    }
+
+    @Override
+    public boolean keyTyped(char character) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        isFired = true;
+        return false;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
+        return false;
+    }
+
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        return false;
+    }
+
+    @Override
+    public boolean scrolled(float amountX, float amountY) {
+        return false;
     }
 }
