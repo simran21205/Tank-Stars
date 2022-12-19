@@ -106,7 +106,7 @@ public class GameScreen implements Screen, InputProcessor {
         playerShip = new PlayerTank(WORLD_HEIGHT*1/15,WORLD_WIDTH/2,
                 10, 15,
                 30, 10,
-                3f,2f,45,1f,
+                3f,2f,100,5f,
                 tank1TextureRegion, tank1TextureRegion,playerWeaponTextureRegion);
         enemyShip = new EnemyTank(WORLD_HEIGHT*2/4,WORLD_WIDTH/2,
                 10, 15,
@@ -211,13 +211,13 @@ public class GameScreen implements Screen, InputProcessor {
         while (iterator.hasNext()){
             Weapons weapons = iterator.next();
             weapons.draw(batch);
-//            weapons.boundingBox.x += weapons.movementSpeed*deltaTime;
+            weapons.boundingBox.x += weapons.movementSpeed*deltaTime;
 
-            float delta=Gdx.graphics.getDeltaTime();
-            initialVelocity.x=initialVelocity.x+gravity.x*delta*deltaTime;
-            initialVelocity.y=initialVelocity.y+gravity.y*delta*deltaTime;
+//            float delta=Gdx.graphics.getDeltaTime();
+//            initialVelocity.x=initialVelocity.x+gravity.x*delta*deltaTime;
+//            initialVelocity.y=initialVelocity.y+gravity.y*delta*deltaTime;
 
-            weapons.boundingBox.setPosition(weapons.boundingBox.getX()+initialVelocity.x * delta * deltaTime,weapons.boundingBox.getY()+initialVelocity.y * delta * deltaTime);
+//            weapons.boundingBox.setPosition(weapons.boundingBox.getX()+initialVelocity.x * delta * deltaTime,weapons.boundingBox.getY()+initialVelocity.y * delta * deltaTime);
 
             if (weapons.boundingBox.x>WORLD_WIDTH){
                 iterator.remove();
@@ -228,7 +228,7 @@ public class GameScreen implements Screen, InputProcessor {
         while (iterator.hasNext()){
             Weapons weapons = iterator.next();
             weapons.draw(batch);
-//            weapons.boundingBox.x -= weapons.movementSpeed*deltaTime;
+            weapons.boundingBox.x -= weapons.movementSpeed*deltaTime;
 
             if (weapons.boundingBox.x>WORLD_WIDTH){
                 iterator.remove();
