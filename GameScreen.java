@@ -58,6 +58,11 @@ public class GameScreen implements Screen, InputProcessor {
     private float deltTime=2;
     private Vector2 initialVelocity;
     boolean isFired;
+    private int score = 0;
+
+    //Heads-Up Display
+    BitmapFont font;
+    float hudVerticalMargin, hudLeftX, hudRightX, hudCentreX, hudRow1Y, hudRow2Y, hudSectionWidth;
 
     public GameScreen(final TankStars app) {
         this.app = app;
@@ -171,6 +176,46 @@ public class GameScreen implements Screen, InputProcessor {
         }
 
     }
+    private  void prepareHUD() {
+        //Create a BitmapFont from our font file
+        FreeTypeFontGenerator fontGenerator= new FreeTypeFontGenerator(Gdx.files.internal("Blacknorthdemo-mLE25.otf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+
+        fontParameter.size = 72;
+        fontParameter.borderWidth = 3.6f;
+        fontParameter.color = new Color(1, 1, 1, 0.3f);
+        fontParameter.borderColor = new Color(0, 0, 0, 0.3f);
+
+        font = fontGenerator.generateFont(fontParameter);
+
+        //scale the font to fit world
+        font.getData().setScale(0.08f);
+
+        //calculate hud margins, etc.
+        hudVerticalMargin = font.getCapHeight() / 2;
+        hudLeftX = hudVerticalMargin;
+        hudRightX = WORLD_WIDTH * 2 / 3 - hudLeftX;
+        hudCentreX = WORLD_WIDTH / 3;
+        hudRow1Y = WORLD_HEIGHT - hudVerticalMargin;
+        hudRow2Y = hudRow1Y - hudVerticalMargin - font.getCapHeight();
+        hudSectionWidth = WORLD_WIDTH / 3;
+    }
+
+
+
+
+    private void updateAndRenderHUD() {
+        //render top row labels
+        font.draw(batch, "PLAYER1", hudLeftX, hudRow1Y, hudSectionWidth, Align.left, false);
+        font.draw(batch, "VS", hudCentreX, hudRow1Y, hudSectionWidth, Align.center, false);
+        font.draw(batch, "PLAYER2", hudRightX, hudRow1Y, hudSectionWidth, Align.right, false);
+        //render second row values
+        font.draw(batch, String.format(Locale.getDefault(), "%06d", score), hudLeftX, hudRow2Y, hudSectionWidth, Align.left, false);
+//        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.shield), hudCentreX, hudRow2Y, hudSectionWidth, Align.center, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.health), hudRightX, hudRow2Y, hudSectionWidth, Align.right, false);
+    }
+    
+
 
     private void renderExplosions(float deltaTime){}
 
@@ -259,6 +304,8 @@ public class GameScreen implements Screen, InputProcessor {
         detectCollisions();
         renderExplosions(deltaTime);
         //explosions
+        
+        updateAndRenderHUD();
 
         batch.end();
     }
