@@ -15,7 +15,7 @@ public class EnemyTank extends Tank{
     @Override
     public Weapons[] fireweapons() {
         Weapons[] weapons = new Weapons[1];
-        weapons[0]=new Weapons(weaponMovementspeed,boundingBox.x*boundingBox.width*0.6f,boundingBox.y*boundingBox.height*0.6f,
+        weapons[0]=new Weapons(weaponMovementspeed,boundingBox.x+boundingBox.width*0.05f,boundingBox.y+boundingBox.height*0.45f,
                 weapon_width,weapon_heigth,
                 weaponsTextureRegion);
         timesinceLastshot=0;
