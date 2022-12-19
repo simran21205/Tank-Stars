@@ -93,14 +93,14 @@ public class GameScreen implements Screen {
 
         //set up game objects
         playerShip = new PlayerTank(WORLD_HEIGHT*1/15,WORLD_WIDTH/2,
-                2, 3,
+                10, 15,
                 30, 10,
-                1,0.5f,45,1f,
+                3f,2f,45,1f,
                 tank1TextureRegion, tank1TextureRegion,playerWeaponTextureRegion);
         enemyShip = new EnemyTank(WORLD_HEIGHT*2/4,WORLD_WIDTH/2,
-                2, 3,
+                10, 15,
                 30, 10,
-                1f,0.5f,45,1f,
+                3f,2f,45,1f,
                 tank7TextureRegion, tank7TextureRegion,enemyWeaponTextureRegion);
         playerweapons = new LinkedList<>();
         enemyweapons=new LinkedList<>();
