@@ -136,23 +136,34 @@ public class GameScreen implements Screen, InputProcessor {
 
     private void detectInput(float deltaTime){
         float leftlimit, rightlimit, uplimit, downlimit;
-        leftlimit = -playerShip.boundingBox.x;
-        downlimit =-playerShip.boundingBox.y;
-        rightlimit = WORLD_WIDTH - playerShip.boundingBox.x - playerShip.boundingBox.width;
-        uplimit = WORLD_HEIGHT - playerShip.boundingBox.y - playerShip.boundingBox.height;
 
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && rightlimit>0){
-            playerShip.translate(Math.min(playerShip.movementSpeed*deltaTime,rightlimit), 0f);
+        if(playerShip.isturn) {
+            leftlimit = -playerShip.boundingBox.x;
+            downlimit =-playerShip.boundingBox.y;
+            rightlimit = WORLD_WIDTH - playerShip.boundingBox.x - playerShip.boundingBox.width;
+            uplimit = WORLD_HEIGHT - playerShip.boundingBox.y - playerShip.boundingBox.height;
+            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && rightlimit > 0) {
+                playerShip.translate(Math.min(playerShip.movementSpeed * deltaTime, rightlimit), 0f);
+            }
+//
+            if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && leftlimit < 0) {
+                playerShip.translate(Math.max(-playerShip.movementSpeed * deltaTime, leftlimit), 0f);
+            }
         }
-//        if (Gdx.input.isKeyPressed(Input.Keys.UP) && uplimit>0){
-//            playerShip.translate(0f, Math.min(playerShip.movementSpeed*deltaTime,uplimit));
-//        }
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && leftlimit<0){
-            playerShip.translate(Math.max(-playerShip.movementSpeed*deltaTime,leftlimit), 0f);
+        if(enemyShip.isturn) {
+            leftlimit = -enemyShip.boundingBox.x;
+            downlimit =-enemyShip.boundingBox.y;
+            rightlimit = WORLD_WIDTH - enemyShip.boundingBox.x - enemyShip.boundingBox.width;
+            uplimit = WORLD_HEIGHT - enemyShip.boundingBox.y - enemyShip.boundingBox.height;
+            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && rightlimit > 0) {
+                enemyShip.translate(Math.min(enemyShip.movementSpeed * deltaTime, rightlimit), 0f);
+            }
+//
+            if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && leftlimit < 0) {
+                enemyShip.translate(Math.max(-enemyShip.movementSpeed * deltaTime, leftlimit), 0f);
+            }
         }
-//        if (Gdx.input.isKeyPressed(Input.Keys.DOWN) && downlimit<0){
-//            playerShip.translate( 0f, Math.min(-playerShip.movementSpeed*deltaTime,downlimit));
-//        }
+//
 
 //        if (Gdx.input.isTouched()){
 //            float xTouchPixels = Gdx.input.getX();
@@ -264,58 +275,50 @@ public class GameScreen implements Screen, InputProcessor {
         }
     }
 
-    private void updateWeapon(){
-        Weapons[] weapons = playerShip.fireweapons();
-        playerweapons.add(weapons[0]);
-            if(isFired){
-                playerweapons.get(0).draw(batch);
-                float delta=Gdx.graphics.getDeltaTime();
-                initialVelocity.x=(initialVelocity.x*0.7f)+gravity.x*4*delta*deltTime;
-                initialVelocity.y=(initialVelocity.y*0.5f)+gravity.y*4*delta*deltTime;
-                playerweapons.get(0).boundingBox.setPosition(playerweapons.get(0).boundingBox.getX()+initialVelocity.x * delta * deltTime,playerweapons.get(0).boundingBox.getY()+initialVelocity.y * delta * deltTime);
-            }
-
+    private void check(Tank playerShip,Tank enemyShip){
+        if(playerShip.hasFired){
+            playerShip.isturn=false;
+            enemyShip.isturn=true;
         }
+        else {
+            enemyShip.isturn=false;
+            playerShip.isturn=true;
+        }
+
+    }
+
+    private void updateWeapon(float deltaTime) {
+        if (isFired) {
+            if (playerShip.isturn) {
+                Weapons[] weapons = playerShip.fireweapons();
+                playerweapons.add(weapons[0]);
+                playerShip.hasFired = true;
+                playerweapons.get(0).draw(batch);
+//                playerweapons.get(0).boundingBox.x += playerweapons.get(0).movementSpeed * deltaTime;
+                    float delta = Gdx.graphics.getDeltaTime();
+                    initialVelocity.x = (initialVelocity.x * 0.7f) + gravity.x * 4 * delta * deltTime;
+                    initialVelocity.y = (initialVelocity.y * 0.5f) + gravity.y * 4 * delta * deltTime;
+                    playerweapons.get(0).boundingBox.setPosition(playerweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, playerweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
+                isFired = false;
+            }
+            if (enemyShip.isturn) {
+                Weapons[] weapons = enemyShip.fireweapons();
+                enemyweapons.add(weapons[0]);
+                enemyShip.hasFired = true;
+                enemyweapons.get(0).draw(batch);
+                enemyweapons.get(0).boundingBox.x -= enemyweapons.get(0).movementSpeed * deltaTime;
+//                    float delta = Gdx.graphics.getDeltaTime();
+//                    initialVelocity.x = -(initialVelocity.x * 0.7f) - gravity.x * 4 * delta * deltTime;
+//                    initialVelocity.y = (initialVelocity.y * 0.5f) + gravity.y * 4 * delta * deltTime;
+//                    enemyweapons.get(0).boundingBox.setPosition(enemyweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, enemyweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
+                isFired = false;
+            }
+        }
+    }
+
+
 
     private void renderLasers(float deltaTime){
-        if (turn == playerShip){
-            if (!isFired) {
-                Weapons[] weapons = playerShip.fireweapons();
-                if (Gdx.input.isTouched()) {
-                    float leftlimit, rightlimit, uplimit, downlimit;
-                    leftlimit = -playerShip.boundingBox.x;
-                    downlimit =-playerShip.boundingBox.y;
-                    rightlimit = WORLD_WIDTH - playerShip.boundingBox.x - playerShip.boundingBox.width;
-                    uplimit = WORLD_HEIGHT - playerShip.boundingBox.y - playerShip.boundingBox.height;
-
-                    float xTouchPixels = Gdx.input.getX();
-                    float yTouchPixels = Gdx.input.getY();
-                    Vector2 touchPoint = new Vector2(xTouchPixels, yTouchPixels);
-                    touchPoint = viewport.unproject(touchPoint);
-
-                    Vector2 weaponsCenter = new Vector2(playerweapons.get(0).boundingBox.x + playerweapons.get(0).boundingBox.width / 2,
-                            playerweapons.get(0).boundingBox.y + playerweapons.get(0).boundingBox.height / 2);
-
-                    float touchDistance = touchPoint.dst(weaponsCenter);
-
-                    if (touchDistance > TOUCH_MOVEMENT_THRESHOLD) {
-                        float xTouchDifference = touchPoint.x - weaponsCenter.x;
-                        float yTouchDifference = touchPoint.y - weaponsCenter.y;
-
-                        float xMove = xTouchDifference / touchDistance + playerweapons.get(0).movementSpeed * deltaTime;
-                        float yMove = yTouchDifference / touchDistance + playerweapons.get(0).movementSpeed * deltaTime;
-
-                        if (xMove > 0) xMove = Math.min(xMove, rightlimit);
-                        else xMove = Math.max(xMove, leftlimit);
-
-                        if (yMove > 0) yMove = Math.min(yMove, uplimit);
-                        else yMove = Math.max(yMove, downlimit);
-
-                        playerweapons.get(0).translate(xMove, yMove);
-                    }
-                }
-            }
-        }
 //        if(playerShip.canFire()){
 //            Weapons[] weapons = playerShip.fireweapons();
 //            for (Weapons weapons1:weapons){
@@ -377,10 +380,12 @@ public class GameScreen implements Screen, InputProcessor {
 
         //player ship
         playerShip.draw(batch);
-        updateWeapon();
 //        renderLasers(deltaTime);
+        check(playerShip,enemyShip);
+        updateWeapon(deltaTime);
         detectCollisions();
         renderExplosions(deltaTime);
+
         //explosions
 
         updateAndRenderHUD();
