@@ -122,8 +122,12 @@ public class ChooseTank2 implements Screen {
         buttonNew.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                app.gameScreen.choice2=1;
-                app.setScreen(app.gameScreen);
+                if(app.chooseTankScreen.tank1_choice==1)
+                    app.setScreen(app.gameScreen8);
+                if(app.chooseTankScreen.tank1_choice==2)
+                    app.setScreen(app.gameScreen2);
+                if(app.chooseTankScreen.tank1_choice==3)
+                    app.setScreen(app.gameScreen5);
             }
         });
 
@@ -134,8 +138,12 @@ public class ChooseTank2 implements Screen {
         buttonResume.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                app.gameScreen.choice2=2;
-                app.setScreen(app.gameScreen);
+                if(app.chooseTankScreen.tank1_choice==1)
+                    app.setScreen(app.gameScreen9);
+                if(app.chooseTankScreen.tank1_choice==2)
+                    app.setScreen(app.gameScreen3);
+                if(app.chooseTankScreen.tank1_choice==3)
+                    app.setScreen(app.gameScreen6);
             }
         });
 
@@ -146,8 +154,12 @@ public class ChooseTank2 implements Screen {
         buttonExit.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                app.gameScreen.choice2=3;
-                app.setScreen(app.gameScreen);
+                if(app.chooseTankScreen.tank1_choice==1)
+                    app.setScreen(app.gameScreen7);
+                if(app.chooseTankScreen.tank1_choice==2)
+                    app.setScreen(app.gameScreen1);
+                if(app.chooseTankScreen.tank1_choice==3)
+                    app.setScreen(app.gameScreen4);
             }
         });
 
@@ -158,7 +170,12 @@ public class ChooseTank2 implements Screen {
         buttonBack.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                app.setScreen(app.chooseTankScreen);
+                if(app.chooseTankScreen.tank1_choice==1)
+                    app.setScreen(app.gameScreen8);
+                if(app.chooseTankScreen.tank1_choice==2)
+                    app.setScreen(app.gameScreen2);
+                if(app.chooseTankScreen.tank1_choice==3)
+                    app.setScreen(app.gameScreen6);
             }
         });
         stage.addActor(buttonBack);
