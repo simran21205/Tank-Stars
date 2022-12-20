@@ -14,7 +14,7 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -31,6 +31,8 @@ public class GameScreen implements Screen, InputProcessor {
     private final TankStars app;
 
     //screen
+    private World world;
+    private Box2DDebugRenderer debugRenderer;
     private Camera camera;
     private Viewport viewport;
 
@@ -337,14 +339,14 @@ public class GameScreen implements Screen, InputProcessor {
                 enemyShip.hasFired = true;
                 enemyweapons.get(0).draw(batch);
 //                enemyweapons.get(0).boundingBox.x -= enemyweapons.get(0).movementSpeed * deltaTime;
-                    float delta = Gdx.graphics.getDeltaTime();
-                    initialVelocity.x = -(initialVelocity.x * 0.7f) - gravity.x * 4 * delta * deltTime;
-                    initialVelocity.y = (initialVelocity.y * 0.5f) + gravity.y * 4 * delta * deltTime;
-                    enemyweapons.get(0).boundingBox.setPosition(enemyweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, enemyweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
+                float delta = Gdx.graphics.getDeltaTime();
+                initialVelocity.x = -(initialVelocity.x * 0.7f) - gravity.x * 4 * delta * deltTime;
+                initialVelocity.y = (initialVelocity.y * 0.5f) + gravity.y * 4 * delta * deltTime;
+                enemyweapons.get(0).boundingBox.setPosition(enemyweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, enemyweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
 //                    enemyShip.isturn = false;
 //                    playerShip.isturn = true;
 //                    isFired = false;
-          }
+            }
         }
     }
 
@@ -517,5 +519,4 @@ public class GameScreen implements Screen, InputProcessor {
         return false;
     }
 }
-
 
