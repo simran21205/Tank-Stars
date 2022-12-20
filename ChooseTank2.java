@@ -122,7 +122,8 @@ public class ChooseTank2 implements Screen {
         buttonNew.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                app.setScreen(app.playScreen);
+                app.gameScreen.choice2=1;
+                app.setScreen(app.gameScreen);
             }
         });
 
@@ -133,7 +134,8 @@ public class ChooseTank2 implements Screen {
         buttonResume.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                app.setScreen(app.playScreen);
+                app.gameScreen.choice2=2;
+                app.setScreen(app.gameScreen);
             }
         });
 
@@ -144,7 +146,8 @@ public class ChooseTank2 implements Screen {
         buttonExit.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                app.setScreen(app.playScreen);
+                app.gameScreen.choice2=3;
+                app.setScreen(app.gameScreen);
             }
         });
 
