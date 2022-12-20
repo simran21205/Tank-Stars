@@ -213,7 +213,7 @@ public class GameScreen implements Screen, InputProcessor {
         font.draw(batch, "VS", hudCentreX, hudRow1Y, hudSectionWidth, Align.center, false);
         font.draw(batch, "PLAYER2", hudRightX, hudRow1Y, hudSectionWidth, Align.right, false);
         //render second row values
-        font.draw(batch, String.format(Locale.getDefault(), "%06d", score), hudLeftX, hudRow2Y, hudSectionWidth, Align.left, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%06d", enemyShip.health), hudLeftX, hudRow2Y, hudSectionWidth, Align.left, false);
 //        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.shield), hudCentreX, hudRow2Y, hudSectionWidth, Align.center, false);
         font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.health), hudRightX, hudRow2Y, hudSectionWidth, Align.right, false);
     }
