@@ -219,6 +219,25 @@ public class GameScreen implements Screen, InputProcessor {
 //            }
 //        }
     }
+    private void ground(float deltaTime){
+        world=new World(new Vector2(0,-9.18f),true);
+        debugRenderer = new Box2DDebugRenderer();
+        //camera = new OrthographicCamera(Gdx.graphics.getWidth()/10,Gdx.graphics.getHeight()/10);
+
+        BodyDef bodyDef = new BodyDef();
+        bodyDef.type = BodyDef.BodyType.StaticBody;
+        bodyDef.position.set(0,-20);
+        FixtureDef fixtureDef = new FixtureDef();
+        ChainShape shape = new ChainShape();
+        shape.createChain(new Vector2[]{new Vector2(-500,0),new Vector2(500,0)});
+
+        fixtureDef.shape=shape;
+        fixtureDef.friction=5;
+        fixtureDef.restitution=0;
+
+        world.createBody(bodyDef).createFixture(fixtureDef);
+
+    }
     private void prepareHUD() {
         //Create a BitmapFont from our font file
         FreeTypeFontGenerator fontGenerator= new FreeTypeFontGenerator(Gdx.files.internal("Blacknorthdemo-mLE25.otf"));
