@@ -39,6 +39,11 @@ public class GameScreen9 implements Screen, InputProcessor {
     private TextureAtlas textureAtlas;
     private Texture background;
     private TextureRegion ground;
+    private Texture gameOver1;
+    private Texture gameOver2;
+    private boolean paused;
+    private Texture pause;
+
 
     private TextureRegion[] backgrounds;
     private float backgroundHeight; //height of background in World units
@@ -69,6 +74,8 @@ public class GameScreen9 implements Screen, InputProcessor {
     private int score = 0;
     private Tank turn;
     private boolean pHasFired = false;
+    private boolean pPermission =false;
+    private boolean ePermission = false;
     private boolean eHasFired = false;
     public int choice1, choice2;
 
@@ -91,6 +98,9 @@ public class GameScreen9 implements Screen, InputProcessor {
         initialVelocity=new Vector2((float)(throwVelocity*Math.sin(throwAngle * Math.PI / 180)),(float)(throwVelocity*Math.cos(throwAngle * Math.PI / 180)));
 
         textureAtlas = new TextureAtlas("images.atlas");
+        gameOver1 = new Texture("gameover1.png");
+        gameOver2 = new Texture("gameover2.png");
+        pause = new Texture("paused.png");
 //
 //        backgroundHeight = WORLD_HEIGHT * 2;
 //        backgroundMaxScrollingSpeed = (float) (WORLD_HEIGHT) / 4;
@@ -103,7 +113,7 @@ public class GameScreen9 implements Screen, InputProcessor {
         ground = textureAtlas.findRegion("ground2");
         tank1TextureRegion.flip(true, false);
         enemyWeaponTextureRegion.flip(true, false);
-        choice();
+
 
         groundg = new Ground(WORLD_WIDTH,WORLD_HEIGHT/6,ground);
 
@@ -126,65 +136,58 @@ public class GameScreen9 implements Screen, InputProcessor {
         prepareHUD();
     }
 
-    private void choice(){
-        if (choice1 == 1){
-            pTankTexture = tank1TextureRegion;
-        }
-        else if(choice1 == 2){
-            pTankTexture = tank6TextureRegion;
-        }
-        else if(choice1 == 3){
-            pTankTexture = tank7TextureRegion;
-        }
-        if (choice2 == 1){
-            eTankTexture = tank1TextureRegion;
-            eTankTexture.flip(true, false);
-        }
-        else if(choice2 == 2){
-            eTankTexture = tank6TextureRegion;
-            eTankTexture.flip(true, false);
-        }
-        else if(choice2 == 3){
-            eTankTexture = tank7TextureRegion;
-            eTankTexture.flip(true, false);
-        }
-    }
-
     private void detectInput(float deltaTime){
         float leftlimit, rightlimit, uplimit, downlimit;
-
         if(turn == playerShip && turn!=enemyShip) {
-//            if (Gdx.input.isKeyPressed()) {
             leftlimit = -playerShip.boundingBox.x;
             downlimit = -playerShip.boundingBox.y;
             rightlimit = WORLD_WIDTH - playerShip.boundingBox.x - playerShip.boundingBox.width;
             uplimit = WORLD_HEIGHT - playerShip.boundingBox.y - playerShip.boundingBox.height;
             if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && rightlimit > 0) {
-                playerShip.translate(Math.min(playerShip.movementSpeed * deltaTime, rightlimit), 0f);
+                if (playerShip.fuel != 0) {
+                    playerShip.translate(Math.min(playerShip.movementSpeed * deltaTime, rightlimit), 0f);
+                    playerShip.fuel -= deltaTime;
+                }
             }
             if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && leftlimit < 0) {
-                playerShip.translate(Math.max(-playerShip.movementSpeed * deltaTime, leftlimit), 0f);
+                if (playerShip.fuel != 0) {
+                    playerShip.translate(Math.max(-playerShip.movementSpeed * deltaTime, leftlimit), 0f);
+                    playerShip.fuel -= deltaTime;
+                }
             }
-//            }
+            if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+                pPermission = true;
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.P)){
+                paused=!paused;
+            }
         }
         else if(turn == enemyShip && turn!=playerShip) {
-//            if (Gdx.input.isKeyPressed()) {
             leftlimit = -enemyShip.boundingBox.x;
             downlimit = -enemyShip.boundingBox.y;
             rightlimit = WORLD_WIDTH - enemyShip.boundingBox.x - enemyShip.boundingBox.width;
             uplimit = WORLD_HEIGHT - enemyShip.boundingBox.y - enemyShip.boundingBox.height;
             if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && rightlimit > 0) {
-                enemyShip.translate(Math.min(enemyShip.movementSpeed * deltaTime, rightlimit), 0f);
+                if (enemyShip.fuel != 0) {
+                    enemyShip.translate(Math.min(enemyShip.movementSpeed * deltaTime, rightlimit), 0f);
+                    enemyShip.fuel -= deltaTime;
+                }
             }
-//
             if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && leftlimit < 0) {
-                enemyShip.translate(Math.max(-enemyShip.movementSpeed * deltaTime, leftlimit), 0f);
+                if (enemyShip.fuel != 0) {
+                    enemyShip.translate(Math.max(-enemyShip.movementSpeed * deltaTime, leftlimit), 0f);
+                    enemyShip.fuel -= deltaTime;
+                }
             }
-//            }
+            if (Gdx.input.isKeyPressed(Input.Keys.SPACE)){
+                ePermission=true;
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.P)){
+                paused=true;
+            }
         }
     }
     private void prepareHUD() {
-        //Create a BitmapFont from our font file
         FreeTypeFontGenerator fontGenerator= new FreeTypeFontGenerator(Gdx.files.internal("Blacknorthdemo-mLE25.otf"));
         FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 
@@ -195,10 +198,8 @@ public class GameScreen9 implements Screen, InputProcessor {
 
         font = fontGenerator.generateFont(fontParameter);
 
-        //scale the font to fit world
         font.getData().setScale(0.08f);
 
-        //calculate hud margins, etc.
         hudVerticalMargin = font.getCapHeight() / 2;
         hudLeftX = hudVerticalMargin;
         hudRightX = WORLD_WIDTH * 2 / 3 - hudLeftX;
@@ -213,12 +214,10 @@ public class GameScreen9 implements Screen, InputProcessor {
         font.draw(batch, "VS", hudCentreX, hudRow1Y, hudSectionWidth, Align.center, false);
         font.draw(batch, "PLAYER2", hudRightX, hudRow1Y, hudSectionWidth, Align.right, false);
         //render second row values
-        font.draw(batch, String.format(Locale.getDefault(), "%06d", enemyShip.health), hudLeftX, hudRow2Y, hudSectionWidth, Align.left, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%06d", score), hudLeftX, hudRow2Y, hudSectionWidth, Align.left, false);
 //        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.shield), hudCentreX, hudRow2Y, hudSectionWidth, Align.center, false);
         font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.health), hudRightX, hudRow2Y, hudSectionWidth, Align.right, false);
     }
-
-
 
     private void renderExplosions(float deltaTime){}
 
@@ -229,9 +228,18 @@ public class GameScreen9 implements Screen, InputProcessor {
             if (enemyShip.intersects(weapons.boundingBox)){
                 //contact with enemy
                 enemyShip.hit(weapons);
+                enemyShip.health -= 50;
+                pPermission=false;
+                playerShip.fuel=0;
+                enemyShip.fuel = 50;
+                turn = enemyShip;
                 iterator.remove();
             }
             if (groundg.intersects(weapons.boundingBox)){
+                pPermission=false;
+                playerShip.fuel=0;
+                enemyShip.fuel = 50;
+                turn = enemyShip;
                 iterator.remove();
             }
         }
@@ -239,84 +247,116 @@ public class GameScreen9 implements Screen, InputProcessor {
         while (iterator.hasNext()){
             Weapons weapons = iterator.next();
             if (playerShip.intersects((weapons.boundingBox))){
+                ePermission=false;
+                playerShip.health -= 50;
+                enemyShip.fuel=0;
+                playerShip.fuel = 50;
+                turn = playerShip;
                 iterator.remove();
             }
             if (groundg.intersects(weapons.boundingBox)){
+                ePermission=false;
+                enemyShip.fuel=0;
+                playerShip.fuel = 50;
+                turn = playerShip;
                 iterator.remove();
             }
         }
     }
-    //    private void check(Tank playerShip,Tank enemyShip){
-//        if(playerShip.hasFired){
-//            playerShip.isturn=false;
-//            enemyShip.isturn=true;
-//            playerShip.hasFired=false;
-//        }
-//        else if (enemyShip.hasFired){
-//            enemyShip.isturn=false;
-//            playerShip.isturn=true;
-//            enemyShip.hasFired=false;
-//        }
-//
-//    }
     private void updateWeapon(float deltaTime) {
-        if (turn == playerShip) {
-            if (isFired) {
-                Weapons[] weapons = playerShip.fireweapons();
-                playerweapons.add(weapons[0]);
-                playerweapons.get(0).draw(batch);
-//                playerweapons.get(0).boundingBox.x += playerweapons.get(0).movementSpeed * deltaTime;
-                float delta = Gdx.graphics.getDeltaTime();
-                initialVelocity.x = (initialVelocity.x * 0.7f) + gravity.x * 2 * delta * deltTime;
-                initialVelocity.y = (initialVelocity.y * 0.5f) + gravity.y * 2 * delta * deltTime;
-                playerweapons.get(0).boundingBox.setPosition(playerweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, playerweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
-                pHasFired = true;
-                eHasFired = false;
-                turn = enemyShip;
-                return;
+        if (turn == playerShip && pPermission) {
+            Weapons[] weapons2 = playerShip.fireweapons();
+            playerweapons.add(weapons2[0]);
+            ListIterator<Weapons> iterator = playerweapons.listIterator();
+            playerweapons.get(0).draw(batch);
+            playerweapons.get(0).boundingBox.x += playerweapons.get(0).movementSpeed * deltaTime;
+            if (playerweapons.get(0).boundingBox.x > WORLD_WIDTH) {
+                iterator.remove();
             }
-        } else if (turn == enemyShip) {
-            if (isFired) {
-                Weapons[] weapons = enemyShip.fireweapons();
-                enemyweapons.add(weapons[0]);
-                enemyweapons.get(0).draw(batch);
-//                enemyweapons.get(0).boundingBox.x -= enemyweapons.get(0).movementSpeed * deltaTime;
-                float delta = Gdx.graphics.getDeltaTime();
-                initialVelocity.x = -(initialVelocity.x * 0.7f) - gravity.x * 4 * delta * deltTime;
-                initialVelocity.y = (initialVelocity.y * 0.5f) + gravity.y * 4 * delta * deltTime;
-                enemyweapons.get(0).boundingBox.setPosition(enemyweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, enemyweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
-                eHasFired = true;
-                pHasFired = false;
-                turn = playerShip;
+            pHasFired = true;
+            eHasFired = false;
+
+
+        }
+        else if (turn == enemyShip && ePermission) {
+            Weapons[] weapons2 = enemyShip.fireweapons();
+            enemyweapons.add(weapons2[0]);
+            ListIterator<Weapons> iterator = enemyweapons.listIterator();
+            Weapons weapons = iterator.next();
+            weapons.draw(batch);
+            weapons.boundingBox.x -= weapons.movementSpeed * deltaTime;
+            if (weapons.boundingBox.x > WORLD_WIDTH) {
+                iterator.remove();
             }
+            pHasFired = true;
+            eHasFired = false;
         }
     }
     @Override
     public void render(float deltaTime) {
         batch.begin();
 
-        detectInput(deltaTime);
-
-        playerShip.update(deltaTime);
-        enemyShip.update(deltaTime);
-
-        batch.draw(background,0,0,WORLD_WIDTH,WORLD_HEIGHT);
-//        batch.draw(ground,0,0,WORLD_WIDTH,WORLD_HEIGHT/4);
-
+        batch.draw(background, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         groundg.draw(batch);
         enemyShip.draw(batch);
         playerShip.draw(batch);
 
-        updateWeapon(deltaTime);
-        detectCollisions();
-        renderExplosions(deltaTime);
-
-        //explosions
-
-        updateAndRenderHUD();
-
+        if (playerShip.health <= 0 || enemyShip.health <= 0) {
+            if(playerShip.health>0) {
+                batch.draw(gameOver1, 0, 30, WORLD_WIDTH, WORLD_HEIGHT / 2);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                if(Gdx.input.isKeyPressed(Input.Keys.R)){
+                    app.setScreen(new ChooseTank(app));
+                } else if (Gdx.input.isKeyPressed(Input.Keys.M)) {
+                    app.setScreen(new MainMenuScreen(app));
+                }
+            }
+            else {
+                batch.draw(gameOver2, 0, 30, WORLD_WIDTH, WORLD_HEIGHT / 2);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                if(Gdx.input.isKeyPressed(Input.Keys.R)){
+                    app.setScreen(new ChooseTank(app));
+                } else if (Gdx.input.isKeyPressed(Input.Keys.M)) {
+                    app.setScreen(new MainMenuScreen(app));
+                }
+            }
+        } else {
+            if (paused) {
+                batch.draw(pause, 0, 30, WORLD_WIDTH , WORLD_HEIGHT / 2);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                if(Gdx.input.isKeyPressed(Input.Keys.A)){
+                    paused=false;
+                } else if (Gdx.input.isKeyPressed(Input.Keys.M)) {
+                    app.setScreen(new MainMenuScreen(app));
+                }
+//                else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+//                    app.setScreen(app.mainMenuScreen);}
+            } else
+            {
+                playerShip.update(deltaTime);
+                enemyShip.update(deltaTime);
+                updateWeapon(deltaTime);
+                detectCollisions();
+                detectInput(deltaTime);
+                renderExplosions(deltaTime);
+                updateAndRenderHUD();
+            }
+        }
         batch.end();
     }
+
 
     @Override
     public void resize(int width, int height) {
