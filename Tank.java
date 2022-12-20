@@ -21,6 +21,8 @@ public abstract class Tank {
     float weaponMovementspeed;
     float timeBetweenshots;
     float timesinceLastshot=0;
+    int health=100;
+    int fuel=100;
 
 
     //graphics
