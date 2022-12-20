@@ -41,6 +41,7 @@ public class GameScreen implements Screen, InputProcessor {
     //graphics
     private SpriteBatch batch;
     private final Texture background;
+    private Texture gameOver;
 
     private TextureRegion[] backgrounds;
     private float backgroundHeight; //height of background in World units
@@ -52,10 +53,7 @@ public class GameScreen implements Screen, InputProcessor {
     private int backgroundOffset;
     //timing
     private float[] backgroundOffsets = {0, 0, 0, 0};
-    private float backgroundMaxScrollingSpeed;
-    private TextButton buttonSettings, buttonWeapon ;
-    private Skin skin;
-    private Stage stage;
+
 
     //world parameters
     private final int WORLD_WIDTH = 72;
@@ -100,7 +98,6 @@ public class GameScreen implements Screen, InputProcessor {
         camera = new OrthographicCamera();
         viewport = new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         background = new Texture("background2.png");
-//        ground = new TextureRegion("ground2.png");
 
         Gdx.input.setInputProcessor(this);
         gravity=new Vector2(0, -Gdx.graphics.getHeight()*.05f);
@@ -108,10 +105,7 @@ public class GameScreen implements Screen, InputProcessor {
         initialVelocity=new Vector2((float)(throwVelocity*Math.sin(throwAngle * Math.PI / 180)),(float)(throwVelocity*Math.cos(throwAngle * Math.PI / 180)));
 
         TextureAtlas textureAtlas = new TextureAtlas("images.atlas");
-//
-//        backgroundHeight = WORLD_HEIGHT * 2;
-//        backgroundMaxScrollingSpeed = (float) (WORLD_HEIGHT) / 4;
-        this.stage = new Stage(new FitViewport(TankStars.V_WIDTH, TankStars.V_HEIGHT, app.camera));
+
 
         tank1TextureRegion = textureAtlas.findRegion("tank1");
         tank6TextureRegion = textureAtlas.findRegion("tank6");
@@ -124,6 +118,7 @@ public class GameScreen implements Screen, InputProcessor {
         enemyWeaponTextureRegion.flip(true, false);
         choice();
 
+        gameOver = new Texture("gameOver.png");
         groundg = new Ground(WORLD_WIDTH,WORLD_HEIGHT/6, ground);
         setting = new Button(WORLD_WIDTH/10, WORLD_HEIGHT/10, settings);
 
@@ -247,7 +242,7 @@ public class GameScreen implements Screen, InputProcessor {
 //        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.shield), hudCentreX, hudRow2Y, hudSectionWidth, Align.center, false);
         font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.health), hudRightX, hudRow2Y, hudSectionWidth, Align.right, false);
     }
-    
+
     private void renderExplosions(float deltaTime){}
 
     private void detectCollisions(){
@@ -257,7 +252,7 @@ public class GameScreen implements Screen, InputProcessor {
             if (enemyShip.intersects(weapons.boundingBox)){
                 //contact with enemy
                 enemyShip.hit(weapons);
-                enemyShip.health -= 15;
+                enemyShip.health -= 50;
                 pPermission=false;
                 playerShip.fuel=0;
                 enemyShip.fuel = 50;
@@ -277,6 +272,7 @@ public class GameScreen implements Screen, InputProcessor {
             Weapons weapons = iterator.next();
             if (playerShip.intersects((weapons.boundingBox))){
                 ePermission=false;
+                playerShip.health -= 50;
                 enemyShip.fuel=0;
                 playerShip.fuel = 50;
                 turn = playerShip;
@@ -296,7 +292,6 @@ public class GameScreen implements Screen, InputProcessor {
             Weapons[] weapons2 = playerShip.fireweapons();
             playerweapons.add(weapons2[0]);
             ListIterator<Weapons> iterator = playerweapons.listIterator();
-//            while (iterator.hasNext()) {
             playerweapons.get(0).draw(batch);
             playerweapons.get(0).boundingBox.x += playerweapons.get(0).movementSpeed * deltaTime;
             if (playerweapons.get(0).boundingBox.x > WORLD_WIDTH) {
@@ -304,15 +299,13 @@ public class GameScreen implements Screen, InputProcessor {
             }
             pHasFired = true;
             eHasFired = false;
-
             return;
-//            }
+
         }
         else if (turn == enemyShip && ePermission) {
             Weapons[] weapons2 = enemyShip.fireweapons();
             enemyweapons.add(weapons2[0]);
             ListIterator<Weapons> iterator = enemyweapons.listIterator();
-//            while (iterator.hasNext()) {
             Weapons weapons = iterator.next();
             weapons.draw(batch);
             weapons.boundingBox.x -= weapons.movementSpeed * deltaTime;
@@ -321,38 +314,31 @@ public class GameScreen implements Screen, InputProcessor {
             }
             pHasFired = true;
             eHasFired = false;
-
-
         }
     }
     @Override
     public void render(float deltaTime) {
         batch.begin();
 
-        detectInput(deltaTime);
-
-        playerShip.update(deltaTime);
-        enemyShip.update(deltaTime);
-
         batch.draw(background,0,0,WORLD_WIDTH,WORLD_HEIGHT);
-//        batch.draw(ground,0,0,WORLD_WIDTH,WORLD_HEIGHT/4);
-
         groundg.draw(batch);
         enemyShip.draw(batch);
         playerShip.draw(batch);
-        updateWeapon(deltaTime);
 
-        detectCollisions();
-        renderExplosions(deltaTime);
-
-        //explosions
-
-        updateAndRenderHUD();
-
+        if (playerShip.health <=0 || enemyShip.health<=0)
+        {
+            batch.draw(gameOver,0,0,WORLD_WIDTH,WORLD_HEIGHT);
+        }
+        else{
+            playerShip.update(deltaTime);
+            enemyShip.update(deltaTime);
+            detectInput(deltaTime);
+            updateWeapon(deltaTime);
+            detectCollisions();
+            renderExplosions(deltaTime);
+            updateAndRenderHUD();
+        }
         batch.end();
-
-
-
     }
 
     @Override
