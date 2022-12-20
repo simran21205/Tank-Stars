@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -56,8 +57,8 @@ public class GameScreen implements Screen, InputProcessor {
     //game objects
     private Tank playerShip;
     private Tank enemyShip;
-    private ArrayList<Weapons> playerweapons ;
-    private ArrayList<Weapons> enemyweapons;
+    private LinkedList<Weapons> playerweapons ;
+    private LinkedList<Weapons> enemyweapons;
     private final float TOUCH_MOVEMENT_THRESHOLD = 0.5f;
     Vector2 gravity;
     private float throwAngle=50;
@@ -85,6 +86,11 @@ public class GameScreen implements Screen, InputProcessor {
 
         //set up the texture atlas
         textureAtlas = new TextureAtlas("images.atlas");
+        BodyDef bodyDef = new BodyDef();
+// We set our body to dynamic, for something like ground which doesn't move we would set it to StaticBody
+        bodyDef.type = BodyDef.BodyType.DynamicBody;
+// Set our body's starting position in the world
+        bodyDef.position.set(5, 10);
 
         //setting up the background
 //        backgrounds = new TextureRegion[4];
@@ -118,15 +124,15 @@ public class GameScreen implements Screen, InputProcessor {
         playerShip = new PlayerTank(WORLD_HEIGHT/15,WORLD_WIDTH/2,
                 5, 8,
                 10, 10,
-                2f,1f,5,1f,
+                2f,1f,40,2f,
                 tank1TextureRegion, tank1TextureRegion,playerWeaponTextureRegion);
         enemyShip = new EnemyTank(WORLD_HEIGHT*2/4,WORLD_WIDTH/2,
                 5, 8,
                 10, 10,
-                2f,1f,5,1f,
+                2f,1f,40,2f,
                 tank7TextureRegion, tank7TextureRegion,enemyWeaponTextureRegion);
-        playerweapons = new ArrayList<>();
-        enemyweapons=new ArrayList<>();
+        playerweapons = new LinkedList<>();
+        enemyweapons=new LinkedList<>();
         turn = playerShip;
 
 
@@ -280,7 +286,7 @@ public class GameScreen implements Screen, InputProcessor {
             playerShip.isturn=false;
             enemyShip.isturn=true;
         }
-        else {
+        else if (enemyShip.hasFired){
             enemyShip.isturn=false;
             playerShip.isturn=true;
         }
@@ -295,26 +301,35 @@ public class GameScreen implements Screen, InputProcessor {
                 playerShip.hasFired = true;
                 playerweapons.get(0).draw(batch);
 //                playerweapons.get(0).boundingBox.x += playerweapons.get(0).movementSpeed * deltaTime;
-                    float delta = Gdx.graphics.getDeltaTime();
-                    initialVelocity.x = (initialVelocity.x * 0.7f) + gravity.x * 4 * delta * deltTime;
-                    initialVelocity.y = (initialVelocity.y * 0.5f) + gravity.y * 4 * delta * deltTime;
-                    playerweapons.get(0).boundingBox.setPosition(playerweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, playerweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
-                isFired = false;
+                float delta = Gdx.graphics.getDeltaTime();
+                initialVelocity.x = (initialVelocity.x * 0.7f) + gravity.x * 4 * delta * deltTime;
+                initialVelocity.y = (initialVelocity.y * 0.5f) + gravity.y * 4 * delta * deltTime;
+                playerweapons.get(0).boundingBox.setPosition(playerweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, playerweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
+//                playerShip.isturn = false;
+//                enemyShip.isturn = true;
+//                    isFired = false;
+                return;
             }
+        }
+        if (isFired) {
             if (enemyShip.isturn) {
                 Weapons[] weapons = enemyShip.fireweapons();
                 enemyweapons.add(weapons[0]);
                 enemyShip.hasFired = true;
                 enemyweapons.get(0).draw(batch);
-                enemyweapons.get(0).boundingBox.x -= enemyweapons.get(0).movementSpeed * deltaTime;
-//                    float delta = Gdx.graphics.getDeltaTime();
-//                    initialVelocity.x = -(initialVelocity.x * 0.7f) - gravity.x * 4 * delta * deltTime;
-//                    initialVelocity.y = (initialVelocity.y * 0.5f) + gravity.y * 4 * delta * deltTime;
-//                    enemyweapons.get(0).boundingBox.setPosition(enemyweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, enemyweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
-                isFired = false;
-            }
+//                enemyweapons.get(0).boundingBox.x -= enemyweapons.get(0).movementSpeed * deltaTime;
+                    float delta = Gdx.graphics.getDeltaTime();
+                    initialVelocity.x = -(initialVelocity.x * 0.7f) - gravity.x * 4 * delta * deltTime;
+                    initialVelocity.y = (initialVelocity.y * 0.5f) + gravity.y * 4 * delta * deltTime;
+                    enemyweapons.get(0).boundingBox.setPosition(enemyweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, enemyweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
+//                    enemyShip.isturn = false;
+//                    playerShip.isturn = true;
+//                    isFired = false;
+          }
         }
     }
+
+//    }
 
 
 
