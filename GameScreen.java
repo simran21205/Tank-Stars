@@ -233,22 +233,9 @@ public class GameScreen implements Screen, InputProcessor {
 
                     if (yMove > 0 ) yMove = Math.min(yMove,uplimit);
                     else  yMove = Math.max(yMove,downlimit);
+                    initialVelocity=new Vector2((float)((xTouchDifference / touchDistance)*Math.sin(angle * Math.PI / 180)/10),(float)((yTouchDifference/touchDistance)*Math.cos(angle * Math.PI / 180)/10));
                 }
-//                getPath(touchDistance,xMove,yMove,throwAngle,deltaTime);
                 pPermission = true;
-//                v = viewport.unproject(v);
-//                this.mouse=v;
-//                this.angle = findAngle(playerShip.boundingBox.x,playerShip.boundingBox.y,mouse);
-                initialVelocity=new Vector2((float)(touchDistance*Math.sin(angle * Math.PI / 180)),(float)(touchDistance*Math.cos(angle * Math.PI / 180)));
-//                initialVelocity=new Vector2((float)(throwVelocity*Math.sin(findAngle(playerShip.boundingBox.x,playerShip.boundingBox.y,mouse) * Math.PI / 180)),(float)(throwVelocity*Math.cos(findAngle(playerShip.boundingBox.x,playerShip.boundingBox.y,mouse) * Math.PI / 180)));
-//                camera.unproject(mouse.set(Gdx.input.getX(),Gdx.input.getY(),0));
-//                Vector3 mousePoint = new Vector3();
-//                camera.unproject(mousePoint.set(Gdx.input.getX(),Gdx.input.getY(),0));
-//                this.angle = findAngle(playerShip.boundingBox.x,playerShip.boundingBox.y,mousePoint);
-//                mouse.x = mousePoint.x;
-//                mouse.y = mousePoint.y;
-//                mouse.z = mousePoint.z;
-
             }
         }
         else if(turn == enemyShip && turn!=playerShip) {
@@ -272,11 +259,32 @@ public class GameScreen implements Screen, InputProcessor {
                 ePermission = true;
             }
             if (Gdx.input.isTouched()){
-//                Vector3 mousePoint = new Vector3();
-//                camera.unproject(mousePoint.set(Gdx.input.getX(),Gdx.input.getY(),0));
-//                this.angle = findAngle(playerShip.boundingBox.x,playerShip.boundingBox.y,mouse);
-//                mouse.x = mousePoint.x;
-//                mouse.y = mousePoint.y;
+                float xTouchPixels = Gdx.input.getX();
+                float yTouchPixels = Gdx.input.getY();
+                Vector2 touchPoint = new Vector2(xTouchPixels,yTouchPixels);
+                touchPoint = viewport.unproject(touchPoint);
+
+                Vector2 playerShipCenter = new Vector2(enemyShip.boundingBox.x + enemyShip.boundingBox.width/2,
+                        enemyShip.boundingBox.y + enemyShip.boundingBox.height/2);
+
+                touchDistance = touchPoint.dst(playerShipCenter);
+
+                if (touchDistance > TOUCH_MOVEMENT_THRESHOLD){
+                    float xTouchDifference = touchPoint.x - playerShipCenter.x;
+                    float yTouchDifference = touchPoint.y - playerShipCenter.y;
+
+                    this.angle = Math.atan(yTouchDifference/xTouchDifference);
+
+                    xMove = xTouchDifference / touchDistance * enemyShip.movementSpeed * deltaTime;
+                    yMove = yTouchDifference / touchDistance * enemyShip.movementSpeed * deltaTime;
+
+                    if (xMove > 0 ) xMove = Math.min(xMove,rightlimit);
+                    else  xMove = Math.max(xMove,leftlimit);
+
+                    if (yMove > 0 ) yMove = Math.min(yMove,uplimit);
+                    else  yMove = Math.max(yMove,downlimit);
+                    initialVelocity=new Vector2((float)((xTouchDifference / touchDistance)*Math.sin(angle * Math.PI / 180)/10),(float)((yTouchDifference/touchDistance)*Math.cos(angle * Math.PI / 180)/10));
+                }
                 ePermission = true;
             }
         }
@@ -329,6 +337,7 @@ public class GameScreen implements Screen, InputProcessor {
                 //contact with enemy
                 enemyShip.hit(weapons);
                 enemyShip.health -= 15;
+                enemyShip.boundingBox.x+=TOUCH_MOVEMENT_THRESHOLD;
                 pPermission=false;
                 playerShip.fuel=0;
                 enemyShip.fuel = 50;
@@ -349,6 +358,7 @@ public class GameScreen implements Screen, InputProcessor {
             if (playerShip.intersects((weapons.boundingBox))){
                 ePermission=false;
                 playerShip.health -= 15;
+                playerShip.boundingBox.x-=TOUCH_MOVEMENT_THRESHOLD;
                 enemyShip.fuel=0;
                 playerShip.fuel = 50;
                 turn = playerShip;
@@ -370,27 +380,12 @@ public class GameScreen implements Screen, InputProcessor {
             ListIterator<Weapons> iterator = playerweapons.listIterator();
             playerweapons.get(0).draw(batch);
             playerweapons.get(0).translate(xMove,yMove);
-//            initialVelocity=new Vector2((float)(throwVelocity*Math.sin(angle * Math.PI / 180)),(float)(throwVelocity*Math.cos(angle * Math.PI / 180)));
-//            playerweapons.get(0).boundingBox.x += playerweapons.get(0).movementSpeed * deltaTime;
-//            initialVelocity=new Vector2((float)(throwVelocity*Math.sin(angle * Math.PI / 180)),(float)(throwVelocity*Math.cos(angle * Math.PI / 180)));
+
             float delta=Gdx.graphics.getDeltaTime();
             initialVelocity.x=initialVelocity.x+gravity.x*delta*deltaTime;
             initialVelocity.y=initialVelocity.y+gravity.y*4*delta*deltaTime;
 
             playerweapons.get(0).boundingBox.setPosition(playerweapons.get(0).boundingBox.getX()+  initialVelocity.x*delta * deltaTime,playerweapons.get(0).boundingBox.getY()+initialVelocity.y * delta * deltaTime);
-//            camera.unproject(tp.set(Gdx.input.getX(),Gdx.input.getY(),0));
-//            playerweapons.get(0).boundingBox.x += getPath(touchDistance,xMove,yMove,throwAngle,deltaTime).x;
-//            if (path.y<WORLD_HEIGHT-playerShip.boundingBox.y){
-//                playerweapons.get(0).boundingBox.y += getPath(touchDistance,xMove,yMove,throwAngle,deltaTime).y;
-//            }
-//            else {
-//                playerweapons.get(0).boundingBox.y = WORLD_HEIGHT-playerShip.boundingBox.y;
-//            }
-
-//            float delta = Gdx.graphics.getDeltaTime();
-//            initialVelocity.x = (initialVelocity.x *0.7f) + gravity.x * 2 * delta * deltaTime;
-//            initialVelocity.y = (initialVelocity.y *0.7f) + gravity.y * 2 * delta * deltaTime;
-//            playerweapons.get(0).boundingBox.setPosition(playerweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, playerweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
             if (playerweapons.get(0).boundingBox.x > WORLD_WIDTH ||playerweapons.get(0).boundingBox.x<0) {
                 iterator.remove();
             }
@@ -400,15 +395,20 @@ public class GameScreen implements Screen, InputProcessor {
         else if (turn == enemyShip && ePermission) {
             Weapons[] weapons2 = enemyShip.fireweapons();
             enemyweapons.add(weapons2[0]);
+            enemyweapons.get(0).draw(batch);
+            enemyweapons.get(0).translate(xMove,yMove);
             ListIterator<Weapons> iterator = enemyweapons.listIterator();
-            Weapons weapons = iterator.next();
-            weapons.draw(batch);
-            weapons.boundingBox.x -= weapons.movementSpeed * deltaTime;
-            if (weapons.boundingBox.x > WORLD_WIDTH) {
+
+            float delta=Gdx.graphics.getDeltaTime();
+            initialVelocity.x=-1*(initialVelocity.x+gravity.x*delta*deltaTime);
+            initialVelocity.y=initialVelocity.y+gravity.y*4*delta*deltaTime;
+
+            enemyweapons.get(0).boundingBox.setPosition(enemyweapons.get(0).boundingBox.getX()+  initialVelocity.x*delta * deltaTime,enemyweapons.get(0).boundingBox.getY()+initialVelocity.y * delta * deltaTime);
+            if (enemyweapons.get(0).boundingBox.x > WORLD_WIDTH ||enemyweapons.get(0).boundingBox.x<0) {
                 iterator.remove();
             }
-            pHasFired = true;
-            eHasFired = false;
+            pHasFired = false;
+            eHasFired = true;
         }
     }
     @Override
