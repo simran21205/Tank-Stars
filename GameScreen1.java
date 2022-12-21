@@ -1,5 +1,6 @@
 package com.mygdx.game.Screens;
 
+
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -9,29 +10,22 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.scenes.scene2d.Group;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.Json;
+import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.mygdx.game.TankStars;
-import com.badlogic.gdx.graphics.g2d.*;
 //import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 
-import java.util.ArrayList;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Locale;
 
-public class GameScreen1 extends InputProcessor implements Screen {
+public class GameScreen1 extends InputAdapter implements Screen, Json.Serializable {
     private final TankStars app;
 
     //screen
@@ -41,11 +35,7 @@ public class GameScreen1 extends InputProcessor implements Screen {
     //graphics
     private SpriteBatch batch;
     private final Texture background;
-    private Texture gameOver1;
-    private Texture gameOver2;
-    private boolean paused;
-
-    private Texture pause;
+    private Texture gameOver;
 
     private TextureRegion[] backgrounds;
     private float backgroundHeight; //height of background in World units
@@ -53,6 +43,12 @@ public class GameScreen1 extends InputProcessor implements Screen {
     private final TextureRegion tank1TextureRegion;
     private final TextureRegion tank6TextureRegion;
     private final TextureRegion tank7TextureRegion;
+
+    private Texture gameOver1;
+    private Texture gameOver2;
+    private boolean paused;
+    private Texture pause;
+
 
     private int backgroundOffset;
     //timing
@@ -71,7 +67,8 @@ public class GameScreen1 extends InputProcessor implements Screen {
     private LinkedList<Weapons> enemyweapons;
     private final float TOUCH_MOVEMENT_THRESHOLD = 0.5f;
     Vector2 gravity;
-    private float throwAngle=50;
+    private double throwAngle = 45;
+    float throwVelocity;
     private float deltTime=2;
     private Vector2 initialVelocity;
     boolean isFired;
@@ -82,20 +79,22 @@ public class GameScreen1 extends InputProcessor implements Screen {
     private boolean ePermission = false;
     private boolean eHasFired = false;
     public int choice1, choice2;
-
+    private Vector3 mouse;
+    private Vector2 path;
+    Vector3 tp = new Vector3();
+    boolean dragging;
+    private double angle = 45;
 
     //Heads-Up Display
     BitmapFont font;
-    float hudVerticalMargin, hudLeftX, hudRightX, hudCentreX, hudRow1Y, hudRow2Y, hudSectionWidth;
+    float hudVerticalMargin, hudLeftX, hudRightX, hudCentreX, hudRow1Y, hudRow2Y, hudRow3Y, hudRow4Y, hudSectionWidth;
     TextureRegion pTankTexture, eTankTexture;
 //    private Button setting;
-    public enum State{
-        PAUSE,
-        RUN,
-        RESUME,
-        STOPPED
-    }
-    private State state = State.RUN;
+    float xMove, yMove, touchDistance;
+
+
+
+
 
     public GameScreen1(final TankStars app) {
         this.app = app;
@@ -104,13 +103,16 @@ public class GameScreen1 extends InputProcessor implements Screen {
         viewport = new StretchViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         background = new Texture("background2.png");
 
-
         Gdx.input.setInputProcessor(this);
-        gravity=new Vector2(0, -Gdx.graphics.getHeight()*.05f);
-        float throwVelocity=Gdx.graphics.getWidth()*.3f;
-        initialVelocity=new Vector2((float)(throwVelocity*Math.sin(throwAngle * Math.PI / 180)),(float)(throwVelocity*Math.cos(throwAngle * Math.PI / 180)));
 
         TextureAtlas textureAtlas = new TextureAtlas("images.atlas");
+
+        gravity=new Vector2(0, -Gdx.graphics.getHeight()*4f);
+        throwVelocity=Gdx.graphics.getWidth()*.3f;
+        gameOver1 = new Texture("gameover1.png");
+        gameOver2 = new Texture("gameover2.png");
+        pause = new Texture("paused.png");
+
 
 
         tank1TextureRegion = textureAtlas.findRegion("tank1");
@@ -124,23 +126,19 @@ public class GameScreen1 extends InputProcessor implements Screen {
         enemyWeaponTextureRegion.flip(true, false);
 
 
-        gameOver1 = new Texture("gameover1.png");
-        gameOver2 = new Texture("gameover2.png");
-        pause = new Texture("paused.png");
-
-        pause=new Texture("paused.png");
+//        gameOver = new Texture("gameOver.png");
         groundg = new Ground(WORLD_WIDTH,WORLD_HEIGHT/6, ground);
 //        setting = new Button(WORLD_WIDTH/10, WORLD_HEIGHT/10, settings);
 
         playerShip = new PlayerTank(WORLD_HEIGHT/15,WORLD_WIDTH/2,
                 5, 8,
                 10, 10,
-                2f,1f,20,10f,
+                2f,1f,40,10f,
                 tank1TextureRegion, tank1TextureRegion, playerWeaponTextureRegion);
         enemyShip = new EnemyTank(WORLD_HEIGHT*2/4,WORLD_WIDTH/2,
                 5, 8,
                 10, 10,
-                2f,1f,20,10f,
+                2f,1f,40,10f,
                 tank7TextureRegion, tank7TextureRegion, enemyWeaponTextureRegion);
         playerweapons = new LinkedList<>();
         enemyweapons=new LinkedList<>();
@@ -171,11 +169,40 @@ public class GameScreen1 extends InputProcessor implements Screen {
                     playerShip.fuel -= deltaTime;
                 }
             }
-            if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-                pPermission = true;
-            }
+//            if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+//                pPermission = true;
+//            }
             if (Gdx.input.isKeyPressed(Input.Keys.P)){
                 paused=!paused;
+            }
+            if (Gdx.input.isTouched()) {
+                float xTouchPixels = Gdx.input.getX();
+                float yTouchPixels = Gdx.input.getY();
+                Vector2 touchPoint = new Vector2(xTouchPixels,yTouchPixels);
+                touchPoint = viewport.unproject(touchPoint);
+
+                Vector2 playerShipCenter = new Vector2(playerShip.boundingBox.x + playerShip.boundingBox.width/2,
+                        playerShip.boundingBox.y + playerShip.boundingBox.height/2);
+
+                touchDistance = touchPoint.dst(playerShipCenter);
+
+                if (touchDistance > TOUCH_MOVEMENT_THRESHOLD){
+                    float xTouchDifference = touchPoint.x - playerShipCenter.x;
+                    float yTouchDifference = touchPoint.y - playerShipCenter.y;
+
+                    this.angle = Math.atan(yTouchDifference/xTouchDifference);
+
+                    xMove = xTouchDifference / touchDistance * playerShip.movementSpeed * deltaTime;
+                    yMove = yTouchDifference / touchDistance * playerShip.movementSpeed * deltaTime;
+
+                    if (xMove > 0 ) xMove = Math.min(xMove,rightlimit);
+                    else  xMove = Math.max(xMove,leftlimit);
+
+                    if (yMove > 0 ) yMove = Math.min(yMove,uplimit);
+                    else  yMove = Math.max(yMove,downlimit);
+                    initialVelocity=new Vector2((float)((xTouchDifference / touchDistance)*Math.sin(angle * Math.PI / 180)/10),(float)((yTouchDifference/touchDistance)*Math.cos(angle * Math.PI / 180)/10));
+                }
+                pPermission = true;
             }
         }
         else if(turn == enemyShip && turn!=playerShip) {
@@ -195,11 +222,40 @@ public class GameScreen1 extends InputProcessor implements Screen {
                     enemyShip.fuel -= deltaTime;
                 }
             }
-            if (Gdx.input.isKeyPressed(Input.Keys.SPACE)){
-                ePermission=true;
-            }
+//            if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+//                ePermission = true;
+//            }
             if (Gdx.input.isKeyPressed(Input.Keys.P)){
-                paused=true;
+                paused=!paused;
+            }
+            if (Gdx.input.isTouched()){
+                float xTouchPixels = Gdx.input.getX();
+                float yTouchPixels = Gdx.input.getY();
+                Vector2 touchPoint = new Vector2(xTouchPixels,yTouchPixels);
+                touchPoint = viewport.unproject(touchPoint);
+
+                Vector2 playerShipCenter = new Vector2(enemyShip.boundingBox.x + enemyShip.boundingBox.width/2,
+                        enemyShip.boundingBox.y + enemyShip.boundingBox.height/2);
+
+                touchDistance = touchPoint.dst(playerShipCenter);
+
+                if (touchDistance > TOUCH_MOVEMENT_THRESHOLD){
+                    float xTouchDifference = touchPoint.x - playerShipCenter.x;
+                    float yTouchDifference = touchPoint.y - playerShipCenter.y;
+
+                    this.angle = Math.atan(yTouchDifference/xTouchDifference);
+
+                    xMove = xTouchDifference / touchDistance * enemyShip.movementSpeed * deltaTime;
+                    yMove = yTouchDifference / touchDistance * enemyShip.movementSpeed * deltaTime;
+
+                    if (xMove > 0 ) xMove = Math.min(xMove,rightlimit);
+                    else  xMove = Math.max(xMove,leftlimit);
+
+                    if (yMove > 0 ) yMove = Math.min(yMove,uplimit);
+                    else  yMove = Math.max(yMove,downlimit);
+                    initialVelocity=new Vector2((float)((xTouchDifference / touchDistance)*Math.sin(angle * Math.PI / 180)/10),(float)((yTouchDifference/touchDistance)*Math.cos(angle * Math.PI / 180)/10));
+                }
+                ePermission = true;
             }
         }
     }
@@ -222,17 +278,23 @@ public class GameScreen1 extends InputProcessor implements Screen {
         hudCentreX = WORLD_WIDTH / 3;
         hudRow1Y = WORLD_HEIGHT - hudVerticalMargin;
         hudRow2Y = hudRow1Y - hudVerticalMargin - font.getCapHeight();
+        hudRow3Y = hudRow2Y - hudVerticalMargin - font.getCapHeight();
+        hudRow4Y = hudRow3Y - hudVerticalMargin - font.getCapHeight();
         hudSectionWidth = WORLD_WIDTH / 3;
     }
     private void updateAndRenderHUD() {
         //render top row labels
         font.draw(batch, "PLAYER1", hudLeftX, hudRow1Y, hudSectionWidth, Align.left, false);
+        font.draw(batch, "fuel", hudLeftX, hudRow3Y, hudSectionWidth, Align.left, false);
         font.draw(batch, "VS", hudCentreX, hudRow1Y, hudSectionWidth, Align.center, false);
         font.draw(batch, "PLAYER2", hudRightX, hudRow1Y, hudSectionWidth, Align.right, false);
+        font.draw(batch, "fuel", hudRightX, hudRow3Y, hudSectionWidth, Align.right, false);
         //render second row values
-        font.draw(batch, String.format(Locale.getDefault(), "%06d", score), hudLeftX, hudRow2Y, hudSectionWidth, Align.left, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.health), hudLeftX, hudRow2Y, hudSectionWidth, Align.left, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.fuel), hudLeftX, hudRow4Y, hudSectionWidth, Align.left, false);
 //        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.shield), hudCentreX, hudRow2Y, hudSectionWidth, Align.center, false);
-        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.health), hudRightX, hudRow2Y, hudSectionWidth, Align.right, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%02d", enemyShip.health), hudRightX, hudRow2Y, hudSectionWidth, Align.right, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%02d", enemyShip.fuel), hudRightX, hudRow4Y, hudSectionWidth, Align.right, false);
     }
 
     private void renderExplosions(float deltaTime){}
@@ -244,7 +306,8 @@ public class GameScreen1 extends InputProcessor implements Screen {
             if (enemyShip.intersects(weapons.boundingBox)){
                 //contact with enemy
                 enemyShip.hit(weapons);
-                enemyShip.health -= 50;
+                enemyShip.health -= 15;
+                enemyShip.boundingBox.x+=TOUCH_MOVEMENT_THRESHOLD;
                 pPermission=false;
                 playerShip.fuel=0;
                 enemyShip.fuel = 50;
@@ -264,7 +327,8 @@ public class GameScreen1 extends InputProcessor implements Screen {
             Weapons weapons = iterator.next();
             if (playerShip.intersects((weapons.boundingBox))){
                 ePermission=false;
-                playerShip.health -= 50;
+                playerShip.health -= 15;
+                playerShip.boundingBox.x-=TOUCH_MOVEMENT_THRESHOLD;
                 enemyShip.fuel=0;
                 playerShip.fuel = 50;
                 turn = playerShip;
@@ -284,30 +348,56 @@ public class GameScreen1 extends InputProcessor implements Screen {
             Weapons[] weapons2 = playerShip.fireweapons();
             playerweapons.add(weapons2[0]);
             ListIterator<Weapons> iterator = playerweapons.listIterator();
-            playerweapons.get(0).draw(batch);
-            playerweapons.get(0).boundingBox.x += playerweapons.get(0).movementSpeed * deltaTime;
-            if (playerweapons.get(0).boundingBox.x > WORLD_WIDTH) {
+            Weapons w = iterator.next();
+            w.draw(batch);
+            w.translate(xMove, yMove);
+
+            float delta = Gdx.graphics.getDeltaTime();
+            initialVelocity.x = initialVelocity.x + gravity.x * delta * deltaTime;
+            initialVelocity.y = initialVelocity.y + gravity.y * 4 * delta * deltaTime;
+
+            w.boundingBox.setPosition(w.boundingBox.getX() + (initialVelocity.x * delta * deltaTime), w.boundingBox.getY() + (initialVelocity.y * delta * deltaTime));
+            if (w.boundingBox.x > WORLD_WIDTH || w.boundingBox.x < 0) {
                 iterator.remove();
             }
             pHasFired = true;
             eHasFired = false;
-
-
         }
         else if (turn == enemyShip && ePermission) {
             Weapons[] weapons2 = enemyShip.fireweapons();
             enemyweapons.add(weapons2[0]);
+            enemyweapons.get(0).draw(batch);
+            enemyweapons.get(0).translate(xMove,yMove);
             ListIterator<Weapons> iterator = enemyweapons.listIterator();
-            Weapons weapons = iterator.next();
-            weapons.draw(batch);
-            weapons.boundingBox.x -= weapons.movementSpeed * deltaTime;
-            if (weapons.boundingBox.x > WORLD_WIDTH) {
+
+            float delta=Gdx.graphics.getDeltaTime();
+            initialVelocity.x=-1*(initialVelocity.x+gravity.x*delta*deltaTime);
+            initialVelocity.y=initialVelocity.y+gravity.y*4*delta*deltaTime;
+
+            enemyweapons.get(0).boundingBox.setPosition(enemyweapons.get(0).boundingBox.getX()+  initialVelocity.x*delta * deltaTime,enemyweapons.get(0).boundingBox.getY()+initialVelocity.y * delta * deltaTime);
+            if (enemyweapons.get(0).boundingBox.x > WORLD_WIDTH ||enemyweapons.get(0).boundingBox.x<0) {
                 iterator.remove();
             }
-            pHasFired = true;
-            eHasFired = false;
+            pHasFired = false;
+            eHasFired = true;
         }
     }
+    private void save1() throws IOException {
+        FileOutputStream fileOutputStream = new FileOutputStream("out1.text");
+        ObjectOutputStream out = new ObjectOutputStream(fileOutputStream);
+        out.writeObject(playerShip);
+        out.close();
+        fileOutputStream.close();
+    }
+    private void save2() throws IOException {
+        FileOutputStream fileOutputStream = new FileOutputStream("out2.text");
+        ObjectOutputStream out = new ObjectOutputStream(fileOutputStream);
+        out.writeObject(enemyShip);
+        out.close();
+        fileOutputStream.close();
+    }
+
+
     @Override
     public void render(float deltaTime) {
         batch.begin();
@@ -325,11 +415,6 @@ public class GameScreen1 extends InputProcessor implements Screen {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                if(Gdx.input.isKeyPressed(Input.Keys.R)){
-                    app.setScreen(new ChooseTank(app));
-                } else if (Gdx.input.isKeyPressed(Input.Keys.M)) {
-                    app.setScreen(new MainMenuScreen(app));
-                }
             }
             else {
                 batch.draw(gameOver2, 0, 30, WORLD_WIDTH, WORLD_HEIGHT / 2);
@@ -338,11 +423,11 @@ public class GameScreen1 extends InputProcessor implements Screen {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                if(Gdx.input.isKeyPressed(Input.Keys.R)){
-                    app.setScreen(new ChooseTank(app));
-                } else if (Gdx.input.isKeyPressed(Input.Keys.M)) {
-                    app.setScreen(new MainMenuScreen(app));
-                }
+            }
+            if(Gdx.input.isKeyPressed(Input.Keys.R)){
+                app.setScreen(new ChooseTank(app));
+            } else if (Gdx.input.isKeyPressed(Input.Keys.M)) {
+                app.setScreen(new MainMenuScreen(app));
             }
         } else {
             if (paused) {
@@ -357,15 +442,22 @@ public class GameScreen1 extends InputProcessor implements Screen {
                 } else if (Gdx.input.isKeyPressed(Input.Keys.M)) {
                     app.setScreen(new MainMenuScreen(app));
                 }
-//                else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-//                    app.setScreen(app.mainMenuScreen);}
-            } else
+                else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+                    app.loadGameScreen.L=1;
+                    app.setScreen(app.mainMenuScreen);
+
+                }
+
+            }
+                else
                 {
                     playerShip.update(deltaTime);
                     enemyShip.update(deltaTime);
-                    updateWeapon(deltaTime);
-                    detectCollisions();
                     detectInput(deltaTime);
+                    updateWeapon(deltaTime);
+                    playerShip.update(deltaTime);
+                    enemyShip.update(deltaTime);
+                    detectCollisions();
                     renderExplosions(deltaTime);
                     updateAndRenderHUD();
                 }
@@ -443,6 +535,16 @@ public class GameScreen1 extends InputProcessor implements Screen {
     @Override
     public boolean scrolled(float amountX, float amountY) {
         return false;
+    }
+
+    @Override
+    public void write(Json json) {
+
+    }
+
+    @Override
+    public void read(Json json, JsonValue jsonData) {
+
     }
 }
 
