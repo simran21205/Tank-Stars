@@ -123,11 +123,11 @@ public class ChooseTank2 implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if(app.chooseTankScreen.tank1_choice==1)
-                    app.setScreen(app.gameScreen8);
+                    app.setScreen(new GameScreen8(app));
                 if(app.chooseTankScreen.tank1_choice==2)
-                    app.setScreen(app.gameScreen2);
+                    app.setScreen(new GameScreen2(app));
                 if(app.chooseTankScreen.tank1_choice==3)
-                    app.setScreen(app.gameScreen5);
+                    app.setScreen(new GameScreen5(app));
             }
         });
 
@@ -139,11 +139,11 @@ public class ChooseTank2 implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if(app.chooseTankScreen.tank1_choice==1)
-                    app.setScreen(app.gameScreen9);
+                    app.setScreen(new GameScreen9(app));
                 if(app.chooseTankScreen.tank1_choice==2)
-                    app.setScreen(app.gameScreen3);
+                    app.setScreen(new GameScreen3(app));
                 if(app.chooseTankScreen.tank1_choice==3)
-                    app.setScreen(app.gameScreen6);
+                    app.setScreen(new GameScreen6(app));
             }
         });
 
@@ -155,11 +155,12 @@ public class ChooseTank2 implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if(app.chooseTankScreen.tank1_choice==1)
-                    app.setScreen(app.gameScreen7);
-                if(app.chooseTankScreen.tank1_choice==2)
-                    app.setScreen(app.gameScreen1);
+                    app.setScreen(new GameScreen7(app));
+                if(app.chooseTankScreen.tank1_choice==2){
+                    app.setScreen(new GameScreen1(app));
+                }
                 if(app.chooseTankScreen.tank1_choice==3)
-                    app.setScreen(app.gameScreen4);
+                    app.setScreen(new GameScreen4(app));
             }
         });
 
@@ -170,12 +171,7 @@ public class ChooseTank2 implements Screen {
         buttonBack.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                if(app.chooseTankScreen.tank1_choice==1)
-                    app.setScreen(app.gameScreen8);
-                if(app.chooseTankScreen.tank1_choice==2)
-                    app.setScreen(app.gameScreen2);
-                if(app.chooseTankScreen.tank1_choice==3)
-                    app.setScreen(app.gameScreen6);
+                app.setScreen(app.chooseTankScreen);
             }
         });
         stage.addActor(buttonBack);
