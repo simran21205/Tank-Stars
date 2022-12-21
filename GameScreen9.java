@@ -443,7 +443,7 @@ public class GameScreen9 extends InputAdapter implements Screen, Json.Serializab
                     app.setScreen(new MainMenuScreen(app));
                 }
                 else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-                    app.loadGameScreen.L=1;
+                    app.loadGameScreen.L=9;
                     app.setScreen(app.mainMenuScreen);
 
                 }
