@@ -444,7 +444,7 @@ public class GameScreen4 extends InputAdapter implements Screen, Json.Serializab
                     app.setScreen(new MainMenuScreen(app));
                 }
                 else if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-                    app.loadGameScreen.L=1;
+                    app.loadGameScreen.L=4;
                     app.setScreen(app.mainMenuScreen);
 
                 }
