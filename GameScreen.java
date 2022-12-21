@@ -9,15 +9,6 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.scenes.scene2d.Group;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
@@ -67,7 +58,8 @@ public class GameScreen implements Screen, InputProcessor {
     private LinkedList<Weapons> enemyweapons;
     private final float TOUCH_MOVEMENT_THRESHOLD = 0.5f;
     Vector2 gravity;
-    private float throwAngle=50;
+    private double throwAngle = 45;
+    float throwVelocity;
     private float deltTime=2;
     private Vector2 initialVelocity;
     boolean isFired;
@@ -78,19 +70,18 @@ public class GameScreen implements Screen, InputProcessor {
     private boolean ePermission = false;
     private boolean eHasFired = false;
     public int choice1, choice2;
+    private Vector3 mouse;
+    private Vector2 path;
+    Vector3 tp = new Vector3();
+    boolean dragging;
+    private double angle = 45;
 
     //Heads-Up Display
     BitmapFont font;
-    float hudVerticalMargin, hudLeftX, hudRightX, hudCentreX, hudRow1Y, hudRow2Y, hudSectionWidth;
+    float hudVerticalMargin, hudLeftX, hudRightX, hudCentreX, hudRow1Y, hudRow2Y, hudRow3Y, hudRow4Y, hudSectionWidth;
     TextureRegion pTankTexture, eTankTexture;
     private Button setting;
-    public enum State{
-        PAUSE,
-        RUN,
-        RESUME,
-        STOPPED
-    }
-    private State state = State.RUN;
+    float xMove, yMove, touchDistance;
 
     public GameScreen(final TankStars app) {
         this.app = app;
@@ -100,11 +91,12 @@ public class GameScreen implements Screen, InputProcessor {
         background = new Texture("background2.png");
 
         Gdx.input.setInputProcessor(this);
-        gravity=new Vector2(0, -Gdx.graphics.getHeight()*.05f);
-        float throwVelocity=Gdx.graphics.getWidth()*.3f;
-        initialVelocity=new Vector2((float)(throwVelocity*Math.sin(throwAngle * Math.PI / 180)),(float)(throwVelocity*Math.cos(throwAngle * Math.PI / 180)));
 
         TextureAtlas textureAtlas = new TextureAtlas("images.atlas");
+
+        gravity=new Vector2(0, -Gdx.graphics.getHeight()*4f);
+        throwVelocity=Gdx.graphics.getWidth()*.3f;
+
 
 
         tank1TextureRegion = textureAtlas.findRegion("tank1");
@@ -125,12 +117,12 @@ public class GameScreen implements Screen, InputProcessor {
         playerShip = new PlayerTank(WORLD_HEIGHT/15,WORLD_WIDTH/2,
                 5, 8,
                 10, 10,
-                2f,1f,20,10f,
+                2f,1f,40,10f,
                 tank1TextureRegion, tank1TextureRegion, playerWeaponTextureRegion);
         enemyShip = new EnemyTank(WORLD_HEIGHT*2/4,WORLD_WIDTH/2,
                 5, 8,
                 10, 10,
-                2f,1f,20,10f,
+                2f,1f,40,10f,
                 tank7TextureRegion, tank7TextureRegion, enemyWeaponTextureRegion);
         playerweapons = new LinkedList<>();
         enemyweapons=new LinkedList<>();
@@ -166,6 +158,34 @@ public class GameScreen implements Screen, InputProcessor {
         }
     }
 
+    private double findAngle(double startX, double startY, Vector3 mousePoint){
+        double angle;
+        try{
+            angle = Math.atan((playerShip.boundingBox.x-mousePoint.x)/(playerShip.boundingBox.y-mousePoint.y));
+        }
+        catch (Exception e){
+            angle = Math.PI/2;
+        }
+        if (startY < mousePoint.y && startX > mousePoint.x) angle = Math.abs(angle);
+        else if (startY < mousePoint.y && startX < mousePoint.x) angle = Math.PI - angle;
+        else if (startY > mousePoint.y && startX < mousePoint.x) angle = Math.PI + angle;
+        else if (startY > mousePoint.y && startX > mousePoint.x) angle = (Math.PI*2) - angle;
+
+        return angle;
+    }
+    private Vector2 getPath(double power, double xMove, double yMove, double angle, float time){
+//        double power = Math.sqrt(Math.pow(startX-mousepoint.x,2)+Math.pow(startY-mousepoint.y,2));
+        double angle2 = Math.atan(yMove/xMove);
+        double velx = Math.cos(angle2)*power;
+        double vely = Math.sin(angle2)*power;
+        double distX = velx * time;
+        double distY = (vely * time) + (-10 * Math.pow(time,2)/2);
+        float newx = Math.round(distX);
+        float newy = Math.round(distY);
+        Vector2 n = new Vector2(newx,newy);
+        return n;
+    }
+
     private void detectInput(float deltaTime){
         float leftlimit, rightlimit, uplimit, downlimit;
         if(turn == playerShip && turn!=enemyShip) {
@@ -188,26 +208,76 @@ public class GameScreen implements Screen, InputProcessor {
             if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
                 pPermission = true;
             }
+            if (Gdx.input.isTouched()) {
+                float xTouchPixels = Gdx.input.getX();
+                float yTouchPixels = Gdx.input.getY();
+                Vector2 touchPoint = new Vector2(xTouchPixels,yTouchPixels);
+                touchPoint = viewport.unproject(touchPoint);
+
+                Vector2 playerShipCenter = new Vector2(playerShip.boundingBox.x + playerShip.boundingBox.width/2,
+                        playerShip.boundingBox.y + playerShip.boundingBox.height/2);
+
+                touchDistance = touchPoint.dst(playerShipCenter);
+
+                if (touchDistance > TOUCH_MOVEMENT_THRESHOLD){
+                    float xTouchDifference = touchPoint.x - playerShipCenter.x;
+                    float yTouchDifference = touchPoint.y - playerShipCenter.y;
+
+                    this.angle = Math.atan(yTouchDifference/xTouchDifference);
+
+                    xMove = xTouchDifference / touchDistance * playerShip.movementSpeed * deltaTime;
+                    yMove = yTouchDifference / touchDistance * playerShip.movementSpeed * deltaTime;
+
+                    if (xMove > 0 ) xMove = Math.min(xMove,rightlimit);
+                    else  xMove = Math.max(xMove,leftlimit);
+
+                    if (yMove > 0 ) yMove = Math.min(yMove,uplimit);
+                    else  yMove = Math.max(yMove,downlimit);
+                }
+//                getPath(touchDistance,xMove,yMove,throwAngle,deltaTime);
+                pPermission = true;
+//                v = viewport.unproject(v);
+//                this.mouse=v;
+//                this.angle = findAngle(playerShip.boundingBox.x,playerShip.boundingBox.y,mouse);
+                initialVelocity=new Vector2((float)(touchDistance*Math.sin(angle * Math.PI / 180)),(float)(touchDistance*Math.cos(angle * Math.PI / 180)));
+//                initialVelocity=new Vector2((float)(throwVelocity*Math.sin(findAngle(playerShip.boundingBox.x,playerShip.boundingBox.y,mouse) * Math.PI / 180)),(float)(throwVelocity*Math.cos(findAngle(playerShip.boundingBox.x,playerShip.boundingBox.y,mouse) * Math.PI / 180)));
+//                camera.unproject(mouse.set(Gdx.input.getX(),Gdx.input.getY(),0));
+//                Vector3 mousePoint = new Vector3();
+//                camera.unproject(mousePoint.set(Gdx.input.getX(),Gdx.input.getY(),0));
+//                this.angle = findAngle(playerShip.boundingBox.x,playerShip.boundingBox.y,mousePoint);
+//                mouse.x = mousePoint.x;
+//                mouse.y = mousePoint.y;
+//                mouse.z = mousePoint.z;
+
+            }
         }
         else if(turn == enemyShip && turn!=playerShip) {
-                leftlimit = -enemyShip.boundingBox.x;
-                downlimit = -enemyShip.boundingBox.y;
-                rightlimit = WORLD_WIDTH - enemyShip.boundingBox.x - enemyShip.boundingBox.width;
-                uplimit = WORLD_HEIGHT - enemyShip.boundingBox.y - enemyShip.boundingBox.height;
-                if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && rightlimit > 0) {
-                    if (enemyShip.fuel != 0) {
-                        enemyShip.translate(Math.min(enemyShip.movementSpeed * deltaTime, rightlimit), 0f);
-                        enemyShip.fuel -= deltaTime;
-                    }
+            leftlimit = -enemyShip.boundingBox.x;
+            downlimit = -enemyShip.boundingBox.y;
+            rightlimit = WORLD_WIDTH - enemyShip.boundingBox.x - enemyShip.boundingBox.width;
+            uplimit = WORLD_HEIGHT - enemyShip.boundingBox.y - enemyShip.boundingBox.height;
+            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && rightlimit > 0) {
+                if (enemyShip.fuel != 0) {
+                    enemyShip.translate(Math.min(enemyShip.movementSpeed * deltaTime, rightlimit), 0f);
+                    enemyShip.fuel -= deltaTime;
                 }
-                if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && leftlimit < 0) {
-                    if (enemyShip.fuel != 0) {
-                        enemyShip.translate(Math.max(-enemyShip.movementSpeed * deltaTime, leftlimit), 0f);
-                        enemyShip.fuel -= deltaTime;
-                    }
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && leftlimit < 0) {
+                if (enemyShip.fuel != 0) {
+                    enemyShip.translate(Math.max(-enemyShip.movementSpeed * deltaTime, leftlimit), 0f);
+                    enemyShip.fuel -= deltaTime;
                 }
-            if (Gdx.input.isKeyPressed(Input.Keys.SPACE)){
-                ePermission=true;
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+                ePermission = true;
+            }
+            if (Gdx.input.isTouched()){
+//                Vector3 mousePoint = new Vector3();
+//                camera.unproject(mousePoint.set(Gdx.input.getX(),Gdx.input.getY(),0));
+//                this.angle = findAngle(playerShip.boundingBox.x,playerShip.boundingBox.y,mouse);
+//                mouse.x = mousePoint.x;
+//                mouse.y = mousePoint.y;
+                ePermission = true;
             }
         }
     }
@@ -230,17 +300,23 @@ public class GameScreen implements Screen, InputProcessor {
         hudCentreX = WORLD_WIDTH / 3;
         hudRow1Y = WORLD_HEIGHT - hudVerticalMargin;
         hudRow2Y = hudRow1Y - hudVerticalMargin - font.getCapHeight();
+        hudRow3Y = hudRow2Y - hudVerticalMargin - font.getCapHeight();
+        hudRow4Y = hudRow3Y - hudVerticalMargin - font.getCapHeight();
         hudSectionWidth = WORLD_WIDTH / 3;
     }
     private void updateAndRenderHUD() {
         //render top row labels
         font.draw(batch, "PLAYER1", hudLeftX, hudRow1Y, hudSectionWidth, Align.left, false);
+        font.draw(batch, "fuel", hudLeftX, hudRow3Y, hudSectionWidth, Align.left, false);
         font.draw(batch, "VS", hudCentreX, hudRow1Y, hudSectionWidth, Align.center, false);
         font.draw(batch, "PLAYER2", hudRightX, hudRow1Y, hudSectionWidth, Align.right, false);
+        font.draw(batch, "fuel", hudRightX, hudRow3Y, hudSectionWidth, Align.right, false);
         //render second row values
-        font.draw(batch, String.format(Locale.getDefault(), "%06d", score), hudLeftX, hudRow2Y, hudSectionWidth, Align.left, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.health), hudLeftX, hudRow2Y, hudSectionWidth, Align.left, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.fuel), hudLeftX, hudRow4Y, hudSectionWidth, Align.left, false);
 //        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.shield), hudCentreX, hudRow2Y, hudSectionWidth, Align.center, false);
-        font.draw(batch, String.format(Locale.getDefault(), "%02d", playerShip.health), hudRightX, hudRow2Y, hudSectionWidth, Align.right, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%02d", enemyShip.health), hudRightX, hudRow2Y, hudSectionWidth, Align.right, false);
+        font.draw(batch, String.format(Locale.getDefault(), "%02d", enemyShip.fuel), hudRightX, hudRow4Y, hudSectionWidth, Align.right, false);
     }
 
     private void renderExplosions(float deltaTime){}
@@ -252,7 +328,7 @@ public class GameScreen implements Screen, InputProcessor {
             if (enemyShip.intersects(weapons.boundingBox)){
                 //contact with enemy
                 enemyShip.hit(weapons);
-                enemyShip.health -= 50;
+                enemyShip.health -= 15;
                 pPermission=false;
                 playerShip.fuel=0;
                 enemyShip.fuel = 50;
@@ -272,7 +348,7 @@ public class GameScreen implements Screen, InputProcessor {
             Weapons weapons = iterator.next();
             if (playerShip.intersects((weapons.boundingBox))){
                 ePermission=false;
-                playerShip.health -= 50;
+                playerShip.health -= 15;
                 enemyShip.fuel=0;
                 playerShip.fuel = 50;
                 turn = playerShip;
@@ -293,14 +369,33 @@ public class GameScreen implements Screen, InputProcessor {
             playerweapons.add(weapons2[0]);
             ListIterator<Weapons> iterator = playerweapons.listIterator();
             playerweapons.get(0).draw(batch);
-            playerweapons.get(0).boundingBox.x += playerweapons.get(0).movementSpeed * deltaTime;
-            if (playerweapons.get(0).boundingBox.x > WORLD_WIDTH) {
+            playerweapons.get(0).translate(xMove,yMove);
+//            initialVelocity=new Vector2((float)(throwVelocity*Math.sin(angle * Math.PI / 180)),(float)(throwVelocity*Math.cos(angle * Math.PI / 180)));
+//            playerweapons.get(0).boundingBox.x += playerweapons.get(0).movementSpeed * deltaTime;
+//            initialVelocity=new Vector2((float)(throwVelocity*Math.sin(angle * Math.PI / 180)),(float)(throwVelocity*Math.cos(angle * Math.PI / 180)));
+            float delta=Gdx.graphics.getDeltaTime();
+            initialVelocity.x=initialVelocity.x+gravity.x*delta*deltaTime;
+            initialVelocity.y=initialVelocity.y+gravity.y*4*delta*deltaTime;
+
+            playerweapons.get(0).boundingBox.setPosition(playerweapons.get(0).boundingBox.getX()+  initialVelocity.x*delta * deltaTime,playerweapons.get(0).boundingBox.getY()+initialVelocity.y * delta * deltaTime);
+//            camera.unproject(tp.set(Gdx.input.getX(),Gdx.input.getY(),0));
+//            playerweapons.get(0).boundingBox.x += getPath(touchDistance,xMove,yMove,throwAngle,deltaTime).x;
+//            if (path.y<WORLD_HEIGHT-playerShip.boundingBox.y){
+//                playerweapons.get(0).boundingBox.y += getPath(touchDistance,xMove,yMove,throwAngle,deltaTime).y;
+//            }
+//            else {
+//                playerweapons.get(0).boundingBox.y = WORLD_HEIGHT-playerShip.boundingBox.y;
+//            }
+
+//            float delta = Gdx.graphics.getDeltaTime();
+//            initialVelocity.x = (initialVelocity.x *0.7f) + gravity.x * 2 * delta * deltaTime;
+//            initialVelocity.y = (initialVelocity.y *0.7f) + gravity.y * 2 * delta * deltaTime;
+//            playerweapons.get(0).boundingBox.setPosition(playerweapons.get(0).boundingBox.getX() + initialVelocity.x * delta * deltTime, playerweapons.get(0).boundingBox.getY() + initialVelocity.y * delta * deltTime);
+            if (playerweapons.get(0).boundingBox.x > WORLD_WIDTH ||playerweapons.get(0).boundingBox.x<0) {
                 iterator.remove();
             }
             pHasFired = true;
             eHasFired = false;
-            return;
-
         }
         else if (turn == enemyShip && ePermission) {
             Weapons[] weapons2 = enemyShip.fireweapons();
@@ -388,8 +483,10 @@ public class GameScreen implements Screen, InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        isFired = true;
-        return false;
+        if (button != Input.Buttons.LEFT || pointer > 0) return false;
+        camera.unproject(tp.set(screenX, screenY, 0));
+        dragging = true;
+        return true;
     }
 
     @Override
