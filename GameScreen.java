@@ -378,15 +378,16 @@ public class GameScreen implements Screen, InputProcessor {
             Weapons[] weapons2 = playerShip.fireweapons();
             playerweapons.add(weapons2[0]);
             ListIterator<Weapons> iterator = playerweapons.listIterator();
-            playerweapons.get(0).draw(batch);
-            playerweapons.get(0).translate(xMove,yMove);
+            Weapons w = iterator.next();
+            w.draw(batch);
+            w.translate(xMove, yMove);
 
-            float delta=Gdx.graphics.getDeltaTime();
-            initialVelocity.x=initialVelocity.x+gravity.x*delta*deltaTime;
-            initialVelocity.y=initialVelocity.y+gravity.y*4*delta*deltaTime;
+            float delta = Gdx.graphics.getDeltaTime();
+            initialVelocity.x = initialVelocity.x + gravity.x * delta * deltaTime;
+            initialVelocity.y = initialVelocity.y + gravity.y * 4 * delta * deltaTime;
 
-            playerweapons.get(0).boundingBox.setPosition(playerweapons.get(0).boundingBox.getX()+  initialVelocity.x*delta * deltaTime,playerweapons.get(0).boundingBox.getY()+initialVelocity.y * delta * deltaTime);
-            if (playerweapons.get(0).boundingBox.x > WORLD_WIDTH ||playerweapons.get(0).boundingBox.x<0) {
+            w.boundingBox.setPosition(w.boundingBox.getX() + (initialVelocity.x * delta * deltaTime), w.boundingBox.getY() + (initialVelocity.y * delta * deltaTime));
+            if (w.boundingBox.x > WORLD_WIDTH || w.boundingBox.x < 0) {
                 iterator.remove();
             }
             pHasFired = true;
@@ -429,6 +430,8 @@ public class GameScreen implements Screen, InputProcessor {
             enemyShip.update(deltaTime);
             detectInput(deltaTime);
             updateWeapon(deltaTime);
+            playerShip.update(deltaTime);
+            enemyShip.update(deltaTime);
             detectCollisions();
             renderExplosions(deltaTime);
             updateAndRenderHUD();
